@@ -8,58 +8,79 @@
 import * as http from 'node:http';
 import * as fs from 'node:fs/promises';
 
+const requestConfig = {
+    host: '127.0.0.1',
+    port: 7860,
+    path: '/sdapi/v1/txt2img',
+    method: 'POST'
+};
+
 while(1) {
     /**
      * Read and sort input files by ctime.
      */
     const inputs = [];
     const inputFileNames = await fs.readdir('./inputs/');
-    if(inputFileNames.length === 0) {
-        console.warn('no input file');
-        break;
-    }
     for(let i = 0; i < inputFileNames.length; ++i) {
+        if(!inputFileNames[i].endsWith('.json')) continue;
+        const name = inputFileNames[i].slice(0, -5);
         const inputPath = './inputs/' + inputFileNames[i];
-        const stat = await fs.stat(inputPath);
-        const content = await fs.readFile(inputPath);
-        inputs.push({name: inputFileNames[i], ctime: stat.ctimeMs, ...JSON.parse(content)});
+        try {
+            const stat = await fs.stat(inputPath);
+            let content = await fs.readFile(inputPath);
+            content = JSON.parse(content);
+            inputs.push({name, ctime: stat.ctimeMs, ...content});
+        }
+        catch {
+            console.warn('unable to load ' + inputFileNames[i]);
+        }
+    }
+    if(inputs.length === 0) {
+        console.warn('no valid input file');
+        break;
     }
     inputs.sort((a, b) => b.ctime - a.ctime);
     // console.debug(inputs);
+
 
     /**
      * Request for each input.
      */
     for(let i = 0; i < inputs.length; ++i) {
         const time = getTime();
-        console.log(time, inputs[i].name);
+        const name = inputs[i].name;
+        console.log(time, name);
 
-        let result = await httpRequest({
-            host: '127.0.0.1',
-            port: 7860,
-            path: '/sdapi/v1/txt2img',
-            method: 'POST',
-            body: inputs[i]
-        });
-        console.debug('got response');
+        requestConfig.body = inputs[i];
+        const result = await httpRequest(requestConfig);
 
-        const {images, parameters, info, detail: errors} = result;
+        /**
+         * Save information or error into one file.
+         */
+        const outputPath = `./outputs/${name}_${time}.json`;
+        const {detail: errors, images, parameters} = result;
         if(errors || !images || !images.length) {
             console.warn('no output');
-            await fs.writeFile(`./outputs/${time}.json`, JSON.stringify(result, null, '\t'));
+            await fs.writeFile(outputPath, JSON.stringify(result, null, '\t'));
             continue;
         }
+        console.log(`got ${images.length} image` + (images.length > 1 ? 's' : ''));
 
-        await fs.writeFile(`./outputs/${time}.json`,
-            JSON.stringify({
-                input: inputs[i].name,
-                parameters,
-                info: JSON.parse(info)
-            }, null, '\t')
+        const info = JSON.parse(result.info);
+        delete info.all_prompts;
+        delete info.all_negative_prompts;
+        delete info.infotexts;
+        await fs.writeFile(outputPath,
+            JSON.stringify({parameters, info}, null, '\t')
         );
 
+        /**
+         * Save images into multiple files.
+         */
         for(let j = 0; j < images.length; j++) {
-            await fs.writeFile(`./outputs/${time}_${j}.png`, images[j], {encoding: 'base64'});
+            const seed = info.all_seeds[j];
+            const imagePath = `./outputs/${name}_${time}_${seed}.png`;
+            await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
         }
     }
     // break;

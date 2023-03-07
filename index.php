@@ -1,15 +1,6 @@
 <?php
-/**
- * 1. load options
- * 2. arrange queue
- * 3. get some newest results
- */
 
 $url_origin = 'http://127.0.0.1:7860';
-
-/**
- * 1. load options
- */
 $models = file_get_contents($url_origin . '/sdapi/v1/sd-models');
 if(false === $models) exit(http_response_code(500));
 $models = json_decode($models);
@@ -19,6 +10,43 @@ if(false === $samplers) exit(http_response_code(500));
 $samplers = json_decode($samplers);
 
 
+$data = array();
+
+/**
+ * 依檔名順序建出結構。
+ */
+foreach(scandir('./outputs') as $basename) {
+    if(str_ends_with($basename, '.json')) {
+        list($name, $datetime) = explode('_', $basename, 2);
+        $datetime = substr($datetime, 0, -5);
+        $content = file_get_contents("./outputs/$basename");
+        $content = json_decode($content);
+
+        if(!isset($data[$name])) $data[$name] = array();
+        $data[$name][$datetime] = $content;
+        $data[$name][$datetime]->images = array();
+    }
+    if(str_ends_with($basename, '.png')) {
+        list($name, $date, $time) = explode('_', $basename);
+        $data[$name]["{$date}_{$time}"]->images[] = $basename;
+    }
+}
+
+/**
+ * 每個檔名裡，依時間逆序排列。
+ */
+foreach($data as $name => $batch_arr) {
+    uksort($data[$name], function($a, $b) {
+        return strcmp($b, $a);
+    });
+}
+
+/**
+ * 各個檔名間，依「最新產出的那份」的時間，逆序排列。
+ */
+uasort($data, function($a, $b) {
+    return strcmp(array_key_first($b), array_key_first($a));
+});
 
 ?>
 <!DOCTYPE html>
@@ -28,117 +56,112 @@ $samplers = json_decode($samplers);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <!-- <script src="https://cdn.jsdelivr.net/npm/kong-util/dist/all.js"></script> -->
+    <style>
+        .image-container {
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+        .image-container img {
+            height: 16em;
+            max-width: 12em;
+            object-fit: scale-down;
+        }
+        [type=checkbox]:checked {
+            display: none;
+        }
+        [type=checkbox] {
+            width: 15em;
+        }
+        [type=checkbox]::after {
+            content: 'Show Previous';
+        }
+        [type=checkbox]:not(:checked) ~ * {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <header class="container">
         Stable Diffusion WebUI (unofficial)
         <h1>keep running service</h1>
+        <div class="row">
+            <details class="col-lg-7">
+                <summary>model list</summary>
+                <ul>
+                    <?php foreach($models as $model): ?>
+                        <li title="<?= $model->title ?>"><?= $model->model_name ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </details>
+            <details class="col-lg-5">
+                <summary>sampler list</summary>
+                <ul>
+                    <?php foreach($samplers as $sampler): ?>
+                        <li><?= $sampler->name ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </details>
+        </div>
     </header>
     <main class="container">
-        <div class="accordion" id="accordionExample">
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingOne">
-                    <button type="button" class="accordion-button collapsed"
-                        data-bs-toggle="collapse" data-bs-target="#collapseOne"
-                        aria-expanded="false" aria-controls="collapseOne"
-                    >&plus; jump the queue</button>
-                </h2>
-                <div id="collapseOne" class="accordion-collapse collapse show"
-                    aria-labelledby="headingOne" data-bs-parent="#accordionExample"
-                >
-                    <form class="accordion-body">
-                        <div class="mb-3">
-                            <label class="form-label">Prompt</label>
-                            <textarea class="form-control" rows="3">
-masterpiece, best quality,</textarea>
+        <?php foreach($data as $name => $batch_arr): ?>
+            <section>
+                <h2><?= $name ?></h2>
+                <?php foreach($batch_arr as $batch): ?>
+                    <article class="border-top mb-2 pt-2">
+                        <div class="image-container">
+                            <?php foreach($batch->images as $i => $image): ?>
+                                <a target="_blank" href="outputs/<?= $image ?>"
+                                ><img alt="<?= $batch->info->all_seeds[$i] ?>" src="outputs/<?= $image ?>" loading="lazy"></a>
+                            <?php endforeach; ?>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Negative prompt</label>
-                            <textarea class="form-control" rows="3">EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, black and white,
-error, text, watermark, username,
-female, girl, girl, woman, women, pussy, alien, children, child,
-bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, deformed, disfigured, mutation, mutated, extra_limbs,
-                            </textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Model</label>
-                            <select class="form-select">
-                                <?php foreach($models as $model): ?>
-                                    <option value="<?= $model->title ?>"><?= $model->model_name ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Sampler</label>
-                            <select class="form-select">
-                                <?php foreach($samplers as $sampler): ?>
-                                    <option><?= $sampler->name ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label">Width</label>
-                                <input type="number" class="form-control" value="512" min="128" max="1024" step="16">
+                        <details>
+                            <summary>
+                                <?= substr($batch->info->job_timestamp, 2, 6) ?>
+                                <?= substr($batch->info->job_timestamp, 8, 6) ?>
+                            </summary>
+                            <div class="row">
+                                <dl class="col-lg-6">
+                                    <dt>model</dt>
+                                    <dd><?= $batch->parameters->override_settings->sd_model_checkpoint ?></dd>
+                                </dl>
+                                <dl class="col-lg-6">
+                                    <dt>sampler</dt>
+                                    <dd><?= $batch->info->sampler_name ?></dd>
+                                </dl>
+                                <dl class="col-lg-6">
+                                    <dt>prompt</dt>
+                                    <dd><?= $batch->parameters->prompt ?></dd>
+                                </dl>
+                                <dl class="col-lg-6">
+                                    <dt>negative prompt</dt>
+                                    <dd><?= $batch->parameters->negative_prompt ?></dd>
+                                </dl>
+
+                                <dl class="col-md-4">
+                                    <dt>CFG scale</dt>
+                                    <dd><?= $batch->info->cfg_scale ?></dd>
+                                </dl>
+                                <dl class="col-md-4">
+                                    <dt>steps</dt>
+                                    <dd><?= $batch->info->steps ?></dd>
+                                </dl>
+                                <dl class="col-md-4">
+                                    <dt>size</dt>
+                                    <dd>
+                                        <?= $batch->parameters->width ?>
+                                        &times;
+                                        <?= $batch->parameters->height ?>
+                                    </dd>
+                                </dl>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label">Height</label>
-                                <input type="number" class="form-control" value="640" min="128" max="1024" step="16">
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label">Batch count</label>
-                                <input type="number" class="form-control" value="2" min="1" max="8">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">CFG Scale</label>
-                                <input type="number" class="form-control" value="7" min="1" max="30" step="0.5">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">jump the queue</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <article class="border rounded my-2 p-2">
-            <time>2023-03-07 00:17:34.987</time>
-            <div style="white-space: nowrap; overflow-x: auto;">
-                <a href="#" data-seed="3421764254"><img src="https://fakeimg.pl/120x180/"></a>
-                <a href="#"><img src="https://fakeimg.pl/120x180/"></a>
-                <a href="#"><img src="https://fakeimg.pl/120x180/"></a>
-                <a href="#"><img src="https://fakeimg.pl/120x180/"></a>
-                <a href="#"><img src="https://fakeimg.pl/120x180/"></a>
-                <a href="#"><img src="https://fakeimg.pl/120x180/"></a>
-                <a href="#"><img src="https://fakeimg.pl/120x180/"></a>
-            </div>
-            <p title="prompt">an anthro racoon male youth,solo, upper body, nude, big muscle, standing, beautiful eyes, smirking at viewer, in foggy forest, cyberpunk, feral, furry, kemono, masterpiece,best quality,</p>
-            <details>
-                <dl>
-                    <dt>negative prompt</dt>
-                    <dd>EasyNegative, worst quality, low quality, monochrome, blurry,low resolution, black and white,text, error,watermark, username, penis, crossing legs, human face, bishonen, shirt, suit, cloth, female,girl,feral,animal,cub,cloth, alien, pussy, girl, woman, women, children, child, breast, bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, blurry, deformed, disfigured, mutation, mutated, extra_limbs</dd>
-                    <dt>Model</dt>
-                    <dd>anythingfurry_1 [3edd27788a]</dd>
-                    <dt>Sampler</dt>
-                    <dd>DPM++ 2M Karras</dd>
-                    <dt>Size</dt>
-                    <dd>512&times;640</dd>
-                    <dt>CFG Scale</dt>
-                    <dd>7</dd>
-                    <dt>Steps</dt>
-                    <dd>12</dd>
-                </dl>
-            </details>
-        </article>
-        <article class="border rounded my-2 p-2">
-            <time>2023-03-07 00:17:34.987</time>
-        </article>
-        <article class="border rounded my-2 p-2">
-            <time>2023-03-07 00:17:34.987</time>
-        </article>
+                        </details>
+                    </article>
+                    <input type="checkbox">
+                <?php endforeach; ?>
+            </section>
+        <?php endforeach; ?>
     </main>
-    <footer class="container"></footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <footer class="container text-end text-white">EOF</footer>
 </body>
 </html>
