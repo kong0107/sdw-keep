@@ -9,8 +9,7 @@ import * as fs from 'node:fs/promises';
 import lineNotify from './line_notify.js';
 import httpRequestJSON from './http_request_json.js'; // note: fetch() has timeout limit 300 seconds.
 
-await lineNotify('Stable Diffusion WebUI keep requesting');
-
+// await lineNotify('Stable Diffusion WebUI keep requesting');
 while(1) {
     /**
      * Read and sort input files by ctime.
@@ -83,8 +82,14 @@ while(1) {
         delete info.all_negative_prompts;
         delete info.infotexts;
 
+        let brief = name + '\n'
+            + parameters.override_settings.sd_model_checkpoint.split('.')[0]
+            + '\n' + info.sampler_name
+            + '\n' + info.prompt
+        ;
+
         if(images.length > 1) lineNotify({
-            message: info.prompt,
+            message: brief,
             notificationDisabled: true
         }).catch(console.error);
 
@@ -100,7 +105,7 @@ while(1) {
             const imagePath = `./outputs/${name}_${time}_${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
             lineNotify({
-                message: (images.length > 1) ? seed : info.prompt,
+                message: (images.length > 1) ? seed : brief,
                 imageFile: imagePath,
                 notificationDisabled: true
             }).catch(console.error);

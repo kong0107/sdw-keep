@@ -1,4 +1,4 @@
-import request from 'node:http';
+import { request } from 'node:http';
 
 export default function httpRequestJSON(url, options) {
     return new Promise((resolve, reject) => {
