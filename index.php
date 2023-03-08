@@ -85,15 +85,18 @@ uasort($data, function($a, $b) {
         Stable Diffusion WebUI (unofficial)
         <h1>keep running service</h1>
         <div class="row">
-            <details class="col-lg-7">
+            <details class="col-lg-8">
                 <summary>model list</summary>
                 <ul>
-                    <?php foreach($models as $model): ?>
-                        <li title="<?= $model->title ?>"><?= $model->model_name ?></li>
-                    <?php endforeach; ?>
+                    <?php
+                        foreach($models as $model) {
+                            $parts = explode('.', $model->title);
+                            printf('<li>%s<span class="text-muted">.%s</span></li>', $parts[0], $parts[1]);
+                        }
+                    ?>
                 </ul>
             </details>
-            <details class="col-lg-5">
+            <details class="col-lg-4">
                 <summary>sampler list</summary>
                 <ul>
                     <?php foreach($samplers as $sampler): ?>
@@ -105,8 +108,8 @@ uasort($data, function($a, $b) {
     </header>
     <main class="container">
         <?php foreach($data as $name => $batch_arr): ?>
-            <section>
-                <h2><?= $name ?></h2>
+            <section class="my-4">
+                <h2 class="sticky-top"><?= $name ?></h2>
                 <?php foreach($batch_arr as $batch): ?>
                     <article class="border-top mb-2 pt-2">
                         <div class="image-container">
@@ -117,18 +120,16 @@ uasort($data, function($a, $b) {
                         </div>
                         <details>
                             <summary>
-                                <?= substr($batch->info->job_timestamp, 2, 6) ?>
-                                <?= substr($batch->info->job_timestamp, 8, 6) ?>
+                                <?php
+                                    list($model_name) = explode('.', $batch->parameters->override_settings->sd_model_checkpoint);
+                                    echo $model_name;
+                                ?>
+                                <time class="text-muted">
+                                    <?= substr($batch->info->job_timestamp, 2, 6) ?>
+                                    <?= substr($batch->info->job_timestamp, 8, 6) ?>
+                                </time>
                             </summary>
                             <div class="row">
-                                <dl class="col-lg-6">
-                                    <dt>model</dt>
-                                    <dd><?= $batch->parameters->override_settings->sd_model_checkpoint ?></dd>
-                                </dl>
-                                <dl class="col-lg-6">
-                                    <dt>sampler</dt>
-                                    <dd><?= $batch->info->sampler_name ?></dd>
-                                </dl>
                                 <dl class="col-lg-6">
                                     <dt>prompt</dt>
                                     <dd><?= $batch->parameters->prompt ?></dd>
@@ -138,15 +139,19 @@ uasort($data, function($a, $b) {
                                     <dd><?= $batch->parameters->negative_prompt ?></dd>
                                 </dl>
 
-                                <dl class="col-md-4">
+                                <dl class="col-6 col-md-3">
+                                    <dt>sampler</dt>
+                                    <dd><?= $batch->info->sampler_name ?></dd>
+                                </dl>
+                                <dl class="col-6 col-md-3">
                                     <dt>CFG scale</dt>
                                     <dd><?= $batch->info->cfg_scale ?></dd>
                                 </dl>
-                                <dl class="col-md-4">
+                                <dl class="col-6 col-md-3">
                                     <dt>steps</dt>
                                     <dd><?= $batch->info->steps ?></dd>
                                 </dl>
-                                <dl class="col-md-4">
+                                <dl class="col-6 col-md-3">
                                     <dt>size</dt>
                                     <dd>
                                         <?= $batch->parameters->width ?>

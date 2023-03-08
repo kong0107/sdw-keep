@@ -5,15 +5,10 @@
  * 3. Save the info and images separately.
  * 4. Go to step 1.
  */
-import * as http from 'node:http';
 import * as fs from 'node:fs/promises';
+import line_notify from './line_notify.js';
 
-const requestConfig = {
-    host: '127.0.0.1',
-    port: 7860,
-    path: '/sdapi/v1/txt2img',
-    method: 'POST'
-};
+await line_notify('Stable Diffusion WebUI keep requesting');
 
 while(1) {
     /**
@@ -51,8 +46,11 @@ while(1) {
         const name = inputs[i].name;
         console.log(time, name);
 
-        requestConfig.body = inputs[i];
-        const result = await httpRequest(requestConfig);
+        const result = await fetch('http://127.0.0.1:7860/sdapi/v1/txt2img', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(inputs[i])
+        }).then(res => res.json(), console.error);
 
         /**
          * Save information or error into one file.
@@ -70,6 +68,12 @@ while(1) {
         delete info.all_prompts;
         delete info.all_negative_prompts;
         delete info.infotexts;
+
+        if(images.length > 1) line_notify({
+            message: info.prompt,
+            notificationDisabled: true
+        }).catch(console.error);
+
         await fs.writeFile(outputPath,
             JSON.stringify({parameters, info}, null, '\t')
         );
@@ -81,34 +85,17 @@ while(1) {
             const seed = info.all_seeds[j];
             const imagePath = `./outputs/${name}_${time}_${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
+            line_notify({
+                message: (images.length > 1) ? seed : info.prompt,
+                imageFile: imagePath,
+                notificationDisabled: true
+            }).catch(console.error);
         }
     }
-    // break;
+
+    break;
 }
 
-/**
- *
- * @param {Object} options
- * @returns {Promise.<Object>}
- */
-function httpRequest(options) {
-    return new Promise((resolve, reject) => {
-        const req = http.request(options, response => {
-            let rawData = '';
-            response.on('data', chunk => rawData += chunk);
-            response.on('end', () => {
-                try {
-                    resolve(JSON.parse(rawData));
-                } catch(err) {
-                    reject(err);
-                }
-            });
-        });
-        req.write(JSON.stringify(options.body));
-        req.on('error', reject);
-        req.end();
-    });
-}
 
 function getTime(d = null) {
     if(!d) d = new Date();

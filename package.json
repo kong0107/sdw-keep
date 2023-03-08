@@ -1,7 +1,6 @@
 {
   "type": "module",
-  "name": "sdw-request",
-  "version": "0.0.1",
-  "author": "kong0107",
-  "exports": "./index.js"
+  "name": "sdw-keep",
+  "version": "0.1.0",
+  "author": "kong0107"
 }

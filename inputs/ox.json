@@ -1,14 +1,14 @@
 {
-    "prompt": "an anthro male ox, solo, big muscle, samurai, sitting, calves in water, ankles in water, big tummy, nude, furry skin, white towel on crotch, chest hair, brown fur, old, age up, short beard, beautiful eyes, smirking at viewer, open legs, face detail, in onsen, rotenburo surrounded by rocks, misty, foggy, direct sunshine, blue sky, broadleaf trees, feral, furry, kemono, masterpiece, best quality",
+    "prompt": "an anthro male ox, solo, big muscle, sitting, calves in water, ankles in water, big tummy, nude, furry skin, white towel on crotch, chest hair, brown fur, old, age up, short beard, beautiful eyes, smirking at viewer, open legs, face detail, in onsen, rotenburo surrounded by rocks, misty, foggy, direct sunshine, blue sky, broadleaf trees, feral, furry, kemono, masterpiece, best quality",
     "negative_prompt": "EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, error, text, watermark, username, boobs, female, girl, pussy, girl, woman, women, children, child, cub, alien, bishonen, penis, crossing legs, closed legs, human face, shirt, sleeve, cloth, swimming, abs, smooth skin, empty eyes, wooden floor, hardwood flooring, bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, deformed, disfigured, mutation, mutated, extra limbs",
     "sampler_name": "DPM++ 2M Karras",
     "steps": 12,
     "width": 512,
     "height": 640,
-    "batch_size": 2,
-    "n_iter": 2,
+    "batch_size": 1,
+    "n_iter": 1,
     "override_settings": {
-        "sd_model_checkpoint": "abyssorangemix2_Hard.safetensors [e714ee20aa]"
+        "sd_model_checkpoint": "homoerotic_v2.safetensors [b656369cf7]"
     },
     "override_settings_restore_afterwards": false
 }
