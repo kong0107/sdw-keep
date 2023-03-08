@@ -5,10 +5,10 @@
     "steps": 12,
     "width": 512,
     "height": 640,
-    "batch_size": 1,
+    "batch_size": 2,
     "n_iter": 2,
     "override_settings": {
-        "sd_model_checkpoint": "abyssorangemix2_Hard.safetensors [e714ee20aa]"
+        "sd_model_checkpoint": "homoerotic_v2.safetensors [b656369cf7]"
     },
     "override_settings_restore_afterwards": false
 }

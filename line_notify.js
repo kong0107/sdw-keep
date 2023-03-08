@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 const token = JSON.parse(fs.readFileSync('config.json')).line_token;
 const boundary = 'whateverYouWant';
 
-export default function line_notify(params) {
+export default function lineNotify(params) {
     if(typeof params === 'string') params = {message: params};
     if(!params.message) params = {message: ' ', ...params}; // `message` must come before others.
 

@@ -6,9 +6,10 @@
  * 4. Go to step 1.
  */
 import * as fs from 'node:fs/promises';
-import line_notify from './line_notify.js';
+import lineNotify from './line_notify.js';
+import httpRequestJSON from './http_request_json.js'; // note: fetch() has timeout limit 300 seconds.
 
-await line_notify('Stable Diffusion WebUI keep requesting');
+await lineNotify('Stable Diffusion WebUI keep requesting');
 
 while(1) {
     /**
@@ -46,11 +47,24 @@ while(1) {
         const name = inputs[i].name;
         console.log(time, name);
 
-        const result = await fetch('http://127.0.0.1:7860/sdapi/v1/txt2img', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(inputs[i])
-        }).then(res => res.json(), console.error);
+        let result;
+        try {
+            // result = await fetch('http://127.0.0.1:7860/sdapi/v1/txt2img', {
+            //     method: 'POST',
+            //     headers: {'Content-Type': 'application/json'},
+            //     body: JSON.stringify(inputs[i])
+            // }).then(res => res.json());
+            result = await httpRequestJSON('http://127.0.0.1:7860/sdapi/v1/txt2img', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(inputs[i])
+            });
+        }
+        catch(err) {
+            console.error(err);
+            lineNotify(err.toString());
+            break;
+        }
 
         /**
          * Save information or error into one file.
@@ -69,7 +83,7 @@ while(1) {
         delete info.all_negative_prompts;
         delete info.infotexts;
 
-        if(images.length > 1) line_notify({
+        if(images.length > 1) lineNotify({
             message: info.prompt,
             notificationDisabled: true
         }).catch(console.error);
@@ -85,7 +99,7 @@ while(1) {
             const seed = info.all_seeds[j];
             const imagePath = `./outputs/${name}_${time}_${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
-            line_notify({
+            lineNotify({
                 message: (images.length > 1) ? seed : info.prompt,
                 imageFile: imagePath,
                 notificationDisabled: true
