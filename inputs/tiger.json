@@ -1,14 +1,14 @@
 {
-    "prompt": "modern disney style, an anthro male otter, solo, sitting, calves in water, ankles in water, furry, kemono, masterpiece, best quality",
+    "prompt": "an anthro male tiger, solo, sitting, calves in water, ankles in water, furry, kemono, masterpiece, best quality",
     "negative_prompt": "EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, error, text, watermark, username, boobs, female, girl, pussy, girl, woman, women, children, child, cub, alien, bishonen, penis, crossing legs, closed legs, human face, shirt, sleeve, cloth, swimming, abs, smooth skin, empty eyes, wooden floor, hardwood flooring, bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, deformed, disfigured, mutation, mutated, extra limbs",
     "sampler_name": "DPM++ 2S a Karras",
     "steps": 12,
     "width": 512,
     "height": 640,
-    "batch_size": 1,
-    "n_iter": 1,
+    "batch_size": 2,
+    "n_iter": 2,
     "override_settings": {
-        "sd_model_checkpoint": "anythingV3_fp16.ckpt [812cd9f9d9]"
+        "sd_model_checkpoint": "comicDiffusion_v2.ckpt"
     },
     "override_settings_restore_afterwards": false
 }

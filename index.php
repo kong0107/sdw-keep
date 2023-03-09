@@ -119,6 +119,9 @@ unset($data);
         h2 {
             background: linear-gradient(#fff 0%, #ffffffa0 90%, #ffffff00 100%);
         }
+        article:last-of-type ~ [type=checkbox] {
+            display: none;
+        }
         .image-container {
             display: flex;
             overflow-x: auto;
@@ -127,9 +130,6 @@ unset($data);
             height: 16em;
             max-width: 12em;
             object-fit: scale-down;
-        }
-        article:last-of-type ~ [type=checkbox] {
-            display: none;
         }
         [type=checkbox]:checked {
             display: none;
@@ -146,18 +146,21 @@ unset($data);
     </style>
 </head>
 <body>
-    <header class="container">
+    <header class="p-2">
         Stable Diffusion WebUI (unofficial)
         <h1>keep running service</h1>
+        <div class="text-end">
+            <a class="btn btn-secondary" href="sd-status.php">check server status</a>
+        </div>
         <nav>
             <?php foreach(array_keys($struct) as $name): ?>
-                <a href="#<?= $name ?>"><?= $name ?></a>
+                <a class="btn btn-primary" href="#<?= $name ?>"><?= $name ?></a>
             <?php endforeach; ?>
         </nav>
     </header>
-    <main class="container">
+    <main class="row px-2 m-0">
         <?php foreach($struct as $name => $bundle): ?>
-            <section class="my-4" id="<?= $name ?>">
+            <section class="my-2 px-3 col-xxl-6" id="<?= $name ?>">
                 <h2 class="sticky-top"><?= $name ?></h2>
                 <?php foreach($bundle as $batch): ?>
                     <article class="border-top mb-2 pt-2">
@@ -212,6 +215,21 @@ unset($data);
             </section>
         <?php endforeach; ?>
     </main>
-    <footer class="container text-end text-white">EOF</footer>
+    <footer class="p-2 text-end text-white">EOF</footer>
+    <div id="lightbox" class="d-none" style="position: fixed; top: 0; left: 0; z-index: 1069; width: 100%; height: 100%; background-color: #00000080; padding: 1em;"><img style="object-fit: contain; width: 100%; height: 100%;"></div>
+    <script src="https://cdn.jsdelivr.net/npm/kong-util/dist/all.js"></script>
+    <script>
+        kongUtil.use();
+        const lightbox = $('#lightbox');
+        listen(lightbox, 'click', event => {
+            lightbox.classList.add('d-none');
+        });
+        $$('main img').forEach(img => {
+            listen(img, 'click', () => {
+                $('img', lightbox).src = img.src;
+                lightbox.classList.remove('d-none');
+            });
+        })
+    </script>
 </body>
 </html>

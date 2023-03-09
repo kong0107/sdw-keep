@@ -36,6 +36,9 @@
 <body>
     <header class="container">
         <h1>Stable Diffusion status</h1>
+        <div class="text-end">
+            <a class="btn btn-secondary" href="index.php">view outputs</a>
+        </div>
     </header>
     <main class="container">
         <section>
