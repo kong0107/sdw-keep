@@ -1,52 +1,111 @@
 <?php
 
-$url_origin = 'http://127.0.0.1:7860';
-$models = file_get_contents($url_origin . '/sdapi/v1/sd-models');
-if(false === $models) exit(http_response_code(500));
-$models = json_decode($models);
-
-$samplers = file_get_contents($url_origin . '/sdapi/v1/samplers');
-if(false === $samplers) exit(http_response_code(500));
-$samplers = json_decode($samplers);
-
-
+/**
+ * Parse files whose paths are:
+ *    `./outputs/<YYYY-MM-DD>/<name>-<HHmmss>.json`
+ *    `./outputs/<YYYY-MM-DD>/<name>-<HHmmss>-<seed>.png`
+ *
+ * # data structure
+ *
+ * ## read as
+    {
+        <date>+<name>+<time>: {
+            name: <input_filename>,
+            date: <YYYY-MM-DD>,
+            time: <HHmmss>,
+            info: {parameters.sd_model_checkpoint, ...info},
+            images: [<seed>, ...]
+        },
+        ...
+    }
+ *
+ * ## arrange to
+    {
+        <input_filename>: [{
+            ...info,
+            images: [{
+                date: <YYYY-MM-DD>,
+                time: <HHmmss>,
+                seed: \d+
+            }, ...]
+        }],
+        ...
+    }
+ *
+ */
 $data = array();
 
 /**
  * 依檔名順序建出結構。
  */
-foreach(scandir('./outputs') as $basename) {
-    if(str_ends_with($basename, '.json')) {
-        list($name, $datetime) = explode('_', $basename, 2);
-        $datetime = substr($datetime, 0, -5);
-        $content = file_get_contents("./outputs/$basename");
-        $content = json_decode($content);
+foreach(scandir('./outputs') as $dir_name) {
+    if(!preg_match('/^(\\d{4})-(\\d{2})-(\\d{2})$/', $dir_name)) continue;
 
-        if(!isset($data[$name])) $data[$name] = array();
-        $data[$name][$datetime] = $content;
-        $data[$name][$datetime]->images = array();
-    }
-    if(str_ends_with($basename, '.png')) {
-        list($name, $date, $time) = explode('_', $basename);
-        $data[$name]["{$date}_{$time}"]->images[] = $basename;
+    $dir_path = './outputs/' . $dir_name;
+    if(!is_dir($dir_path)) continue;
+
+    foreach(scandir($dir_path) as $basename) {
+        if(preg_match('/^(\\w+)-(\\d{6})\\.json$/', $basename, $matches)
+            || preg_match('/^(\\w+)-(\\d{6})-(\\d+)\\.png$/', $basename, $matches)
+        ) $key = $dir_name . $matches[2] . $matches[1];
+        else continue;
+
+        if(!isset($data[$key])) {
+            $data[$key] = array(
+                'name' => $matches[1],
+                'date' => $dir_name,
+                'time' => $matches[2],
+                'images' => array()
+            );
+        }
+        if(isset($matches[3])) $data[$key]['images'][] = $matches[3];
+        else {
+            $content = file_get_contents($dir_path . '/' . $basename);
+            $content = json_decode($content);
+            if(isset($content->errors)) continue;
+            $info = $content->info;
+            $data[$key]['info'] = array(
+                'model' => $content->parameters->override_settings->sd_model_checkpoint,
+                'sampler' => $info->sampler_name,
+                'prompt' => $info->prompt,
+                'negative_prompt' => $info->negative_prompt,
+                'cfg_scale' => $info->cfg_scale,
+                'steps' => $info->steps,
+                'width' => $info->width,
+                'height' => $info->height
+            );
+        }
     }
 }
 
 /**
- * 每個檔名裡，依時間逆序排列。
+ * 依時間逆序排列。
  */
-foreach($data as $name => $batch_arr) {
-    uksort($data[$name], function($a, $b) {
-        return strcmp($b, $a);
-    });
-}
+ksort($data);
+$data = array_reverse($data);
+
 
 /**
- * 各個檔名間，依「最新產出的那份」的時間，逆序排列。
+ * 整理成需要的結構。
  */
-uasort($data, function($a, $b) {
-    return strcmp(array_key_first($b), array_key_first($a));
-});
+$struct = array();
+foreach($data as $batch) {
+    extract($batch);
+    if(!isset($struct[$name])) $struct[$name] = array();
+    $json = json_encode($info);
+    if(!isset($struct[$name][$json])) {
+        $struct[$name][$json] = $info;
+        $struct[$name][$json]['images'] = array();
+    }
+    foreach($images as $seed) {
+        $struct[$name][$json]['images'][] = array(
+            'date' => $date,
+            'time' => $time,
+            'seed' => $seed
+        );
+    }
+}
+unset($data);
 
 ?>
 <!DOCTYPE html>
@@ -57,14 +116,20 @@ uasort($data, function($a, $b) {
     <title>Document</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
     <style>
+        h2 {
+            background: linear-gradient(#fff 0%, #ffffffa0 90%, #ffffff00 100%);
+        }
         .image-container {
-            white-space: nowrap;
+            display: flex;
             overflow-x: auto;
         }
         .image-container img {
             height: 16em;
             max-width: 12em;
             object-fit: scale-down;
+        }
+        article:last-of-type ~ [type=checkbox] {
+            display: none;
         }
         [type=checkbox]:checked {
             display: none;
@@ -84,79 +149,59 @@ uasort($data, function($a, $b) {
     <header class="container">
         Stable Diffusion WebUI (unofficial)
         <h1>keep running service</h1>
-        <div class="row">
-            <details class="col-lg-8">
-                <summary>model list</summary>
-                <ul>
-                    <?php
-                        foreach($models as $model) {
-                            $parts = explode('.', $model->title);
-                            printf('<li>%s<span class="text-muted">.%s</span></li>', $parts[0], $parts[1]);
-                        }
-                    ?>
-                </ul>
-            </details>
-            <details class="col-lg-4">
-                <summary>sampler list</summary>
-                <ul>
-                    <?php foreach($samplers as $sampler): ?>
-                        <li><?= $sampler->name ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </details>
-        </div>
+        <nav>
+            <?php foreach(array_keys($struct) as $name): ?>
+                <a href="#<?= $name ?>"><?= $name ?></a>
+            <?php endforeach; ?>
+        </nav>
     </header>
     <main class="container">
-        <?php foreach($data as $name => $batch_arr): ?>
-            <section class="my-4">
+        <?php foreach($struct as $name => $bundle): ?>
+            <section class="my-4" id="<?= $name ?>">
                 <h2 class="sticky-top"><?= $name ?></h2>
-                <?php foreach($batch_arr as $batch): ?>
+                <?php foreach($bundle as $batch): ?>
                     <article class="border-top mb-2 pt-2">
+                        <h3><?= $batch['model'] ?></h3>
                         <div class="image-container">
-                            <?php foreach($batch->images as $i => $image): ?>
-                                <a target="_blank" href="outputs/<?= $image ?>"
-                                ><img alt="<?= $batch->info->all_seeds[$i] ?>" src="outputs/<?= $image ?>" loading="lazy"></a>
+                            <?php foreach($batch['images'] as $image): ?>
+                                <figure class="d-flex flex-column">
+                                    <img src="outputs/<?= $image['date'] ?>/<?= $name ?>-<?= $image['time'] ?>-<?= $image['seed'] ?>.png" loading="lazy">
+                                    <figcaption class="text-center">
+                                        <?= $image['date'] ?>
+                                        <?= $image['time'] ?>
+                                    </figcaption>
+                                </figure>
                             <?php endforeach; ?>
                         </div>
                         <details>
-                            <summary>
-                                <?php
-                                    list($model_name) = explode('.', $batch->parameters->override_settings->sd_model_checkpoint);
-                                    echo $model_name;
-                                ?>
-                                <time class="text-muted">
-                                    <?= substr($batch->info->job_timestamp, 2, 6) ?>
-                                    <?= substr($batch->info->job_timestamp, 8, 6) ?>
-                                </time>
-                            </summary>
                             <div class="row">
                                 <dl class="col-lg-6">
                                     <dt>prompt</dt>
-                                    <dd><?= $batch->parameters->prompt ?></dd>
+                                    <dd><?= $batch['prompt'] ?></dd>
                                 </dl>
                                 <dl class="col-lg-6">
                                     <dt>negative prompt</dt>
-                                    <dd><?= $batch->parameters->negative_prompt ?></dd>
+                                    <dd><?= $batch['negative_prompt'] ?></dd>
                                 </dl>
 
                                 <dl class="col-6 col-md-3">
                                     <dt>sampler</dt>
-                                    <dd><?= $batch->info->sampler_name ?></dd>
+                                    <dd><?= $batch['sampler'] ?></dd>
                                 </dl>
                                 <dl class="col-6 col-md-3">
                                     <dt>CFG scale</dt>
-                                    <dd><?= $batch->info->cfg_scale ?></dd>
+                                    <dd><?= $batch['cfg_scale'] ?></dd>
                                 </dl>
                                 <dl class="col-6 col-md-3">
                                     <dt>steps</dt>
-                                    <dd><?= $batch->info->steps ?></dd>
+                                    <dd><?= $batch['steps'] ?></dd>
                                 </dl>
                                 <dl class="col-6 col-md-3">
                                     <dt>size</dt>
                                     <dd>
-                                        <?= $batch->parameters->width ?>
+                                        <?= $batch['width'] ?>
                                         &times;
-                                        <?= $batch->parameters->height ?>
+                                        <?= $batch['height'] ?>
                                     </dd>
                                 </dl>
                             </div>

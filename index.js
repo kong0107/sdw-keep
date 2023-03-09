@@ -3,6 +3,8 @@
  * 1. Read and sort input files by ctime.
  * 2. Request.
  * 3. Save the info and images separately.
+ *    `./outputs/<YYYY-MM-DD>/<name>-<HHmmss>.json`
+ *    `./outputs/<YYYY-MM-DD>/<name>-<HHmmss>-<seed>.png`
  * 4. Go to step 1.
  */
 import * as fs from 'node:fs/promises';
@@ -42,17 +44,16 @@ while(1) {
      * Request for each input.
      */
     for(let i = 0; i < inputs.length; ++i) {
-        const time = getTime();
+        const d = new Date();
+        const date = [d.getFullYear(), pad2(d.getMonth() + 1), pad2(d.getDate())].join('-'); // `YYYY-MM-DD` with hyphens
+        const time = pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds()); // `HHmmss` without colons
+        await fs.mkdir('./outputs/' + date, {recursive: true});
+
         const name = inputs[i].name;
-        console.log(time, name);
+        console.time(name);
 
         let result;
         try {
-            // result = await fetch('http://127.0.0.1:7860/sdapi/v1/txt2img', {
-            //     method: 'POST',
-            //     headers: {'Content-Type': 'application/json'},
-            //     body: JSON.stringify(inputs[i])
-            // }).then(res => res.json());
             result = await httpRequestJSON('http://127.0.0.1:7860/sdapi/v1/txt2img', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -68,13 +69,14 @@ while(1) {
         /**
          * Save information or error into one file.
          */
-        const outputPath = `./outputs/${name}_${time}.json`;
+        const outputPath = `./outputs/${date}/${name}-${time}.json`;
         const {detail: errors, images, parameters} = result;
         if(errors || !images || !images.length) {
             console.warn('no output');
             await fs.writeFile(outputPath, JSON.stringify(result, null, '\t'));
             continue;
         }
+        console.timeEnd(name);
         console.log(`got ${images.length} image` + (images.length > 1 ? 's' : ''));
 
         const info = JSON.parse(result.info);
@@ -102,7 +104,7 @@ while(1) {
          */
         for(let j = 0; j < images.length; j++) {
             const seed = info.all_seeds[j];
-            const imagePath = `./outputs/${name}_${time}_${seed}.png`;
+            const imagePath = `./outputs/${date}/${name}-${time}-${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
             lineNotify({
                 message: (images.length > 1) ? seed : brief,
@@ -112,18 +114,9 @@ while(1) {
         }
     }
 
-    break;
+    // break;
 }
 
-
-function getTime(d = null) {
-    if(!d) d = new Date();
-    return (d.getYear() - 100).toString(36)
-        + (d.getMonth() + 1).toString(36)
-        + d.getDate().toString(36)
-        + '_'
-        + d.getHours().toString().padStart(2, '0')
-        + d.getMinutes().toString().padStart(2, '0')
-        + d.getSeconds().toString().padStart(2, '0')
-    ;
+function pad2(num) {
+    return num.toString().padStart(2, '0');
 }
