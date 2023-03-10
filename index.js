@@ -26,6 +26,7 @@ while(1) {
             const stat = await fs.stat(inputPath);
             let content = await fs.readFile(inputPath);
             content = JSON.parse(content);
+            if(content.disabled) continue;
             inputs.push({name, ctime: stat.ctimeMs, ...content});
         }
         catch {
@@ -37,6 +38,7 @@ while(1) {
         break;
     }
     inputs.sort((a, b) => b.ctime - a.ctime);
+    console.log(inputs.map(i => i.name + ' \xd7' + (i.batch_size * i.n_iter)).join(', '));
     // console.debug(inputs);
 
 
@@ -51,7 +53,11 @@ while(1) {
 
         const name = inputs[i].name;
         console.time(name);
+        const image_quantity = inputs[i].batch_size * inputs[i].n_iter;
+        const plural = (image_quantity > 1) ? 's': '';
+        console.log(`requesting for ${image_quantity} ${name} image${plural} with size ${inputs[i].width}\xd7${inputs[i].height}`);
 
+        const intervalID = setInterval(() => process.stdout.write('.'), 5000);
         let result;
         try {
             result = await httpRequestJSON('http://127.0.0.1:7860/sdapi/v1/txt2img', {
@@ -59,8 +65,12 @@ while(1) {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(inputs[i])
             });
+            clearInterval(intervalID);
+            process.stdout.write('\n');
         }
         catch(err) {
+            clearInterval(intervalID);
+            process.stdout.write('\n');
             console.error(err);
             lineNotify(err.toString());
             break;

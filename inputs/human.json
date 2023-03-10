@@ -1,11 +1,11 @@
 {
-    "prompt": "a hunk, solo, big muscle, sitting on rocks, calves in water, big tummy, black towel on crotch, nude, bald, chest hair, old, age up, big beautiful eyes, smirking at viewer, open legs, face detail, whole body, riverside, masterpiece, best quality",
-    "negative_prompt": "EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, error, text, watermark, username, censored, sea, beach, beard, penis, testicles, boobs, female, girl, pussy, girl, woman, women, children, child, cub, alien, bishonen, crossing legs, closed legs, shirt, sleeve, cloth, swimming, abs, smooth skin, empty eyes, wooden floor, hardwood flooring, bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, deformed, disfigured, mutation, mutated, extra limbs",
+    "prompt": "a asian teenager hunk, completely bald, solo, big muscle, sitting on rocks, calves in water, big tummy, wearing hotpants only, chest hair, big beautiful eyes, smirking at viewer, open legs, face detail, whole body, riverside, masterpiece, best quality",
+    "negative_prompt": "EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, error, text, watermark, username, censored, sea, beach, beard, penis, testicles, head hair, boobs, female, girl, pussy, girl, woman, women, children, child, cub, alien, crossing legs, closed legs, shirt, swimming, abs, smooth skin, empty eyes, wooden floor, hardwood flooring, bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, deformed, disfigured, mutation, mutated, extra limbs",
     "sampler_name": "DPM++ SDE Karras",
     "steps": 12,
     "width": 512,
     "height": 640,
-    "batch_size": 1,
+    "batch_size": 2,
     "n_iter": 1,
     "override_settings": {
         "sd_model_checkpoint": "realisticVisionV13_v13.safetensors [c35782bad8]"
