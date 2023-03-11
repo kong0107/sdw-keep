@@ -127,8 +127,8 @@ unset($data);
             overflow-x: auto;
         }
         .image-container img {
-            height: 16em;
-            max-width: 12em;
+            height: 13.5em;
+            max-width: 24em;
             object-fit: scale-down;
         }
         details:not([open]), summary {
@@ -161,16 +161,15 @@ unset($data);
             <?php endforeach; ?>
         </nav>
     </header>
-    <main class="row px-2 m-0">
+    <main class="px-2">
         <?php foreach($struct as $name => $bundle): ?>
-            <section class="my-2 px-3 col-xxl-6" id="<?= $name ?>">
+            <section class="my-2 p-3 rounded border" id="<?= $name ?>">
                 <h2 class="sticky-top"><?= $name ?></h2>
                 <?php foreach($bundle as $batch): ?>
                     <article class="border-top mb-2 pt-2">
-                        <h3><?= $batch['model'] ?></h3>
                         <div class="image-container">
                             <?php foreach($batch['images'] as $image): ?>
-                                <figure class="d-flex flex-column">
+                                <figure class="d-flex flex-column m-1">
                                     <img src="outputs/<?= $image['date'] ?>/<?= $name ?>-<?= $image['time'] ?>-<?= $image['seed'] ?>.png" loading="lazy">
                                     <figcaption class="text-center">
                                         <?= $image['date'] ?>
@@ -179,39 +178,42 @@ unset($data);
                                 </figure>
                             <?php endforeach; ?>
                         </div>
-                        <details>
-                            <div class="row">
-                                <dl class="col-lg-6">
-                                    <dt>prompt</dt>
-                                    <dd><?= $batch['prompt'] ?></dd>
-                                </dl>
-                                <dl class="col-lg-6">
-                                    <dt>negative prompt</dt>
-                                    <dd><?= $batch['negative_prompt'] ?></dd>
-                                </dl>
+                        <div class="row">
+                            <dl class="col-md-6">
+                                <dt>model</dt>
+                                <dd><?= $batch['model'] ?></dd>
+                            </dl>
+                            <dl class="col-md-6">
+                                <dt>sampler</dt>
+                                <dd><?= $batch['sampler'] ?></dd>
+                            </dl>
 
-                                <dl class="col-6 col-md-3">
-                                    <dt>sampler</dt>
-                                    <dd><?= $batch['sampler'] ?></dd>
-                                </dl>
-                                <dl class="col-6 col-md-3">
-                                    <dt>CFG scale</dt>
-                                    <dd><?= $batch['cfg_scale'] ?></dd>
-                                </dl>
-                                <dl class="col-6 col-md-3">
-                                    <dt>steps</dt>
-                                    <dd><?= $batch['steps'] ?></dd>
-                                </dl>
-                                <dl class="col-6 col-md-3">
-                                    <dt>size</dt>
-                                    <dd>
-                                        <?= $batch['width'] ?>
-                                        &times;
-                                        <?= $batch['height'] ?>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </details>
+                            <dl class="col-lg-6">
+                                <dt>prompt</dt>
+                                <dd><?= $batch['prompt'] ?></dd>
+                            </dl>
+                            <dl class="col-lg-6">
+                                <dt>negative prompt</dt>
+                                <dd><?= $batch['negative_prompt'] ?></dd>
+                            </dl>
+
+                            <dl class="col-sm-4">
+                                <dt>CFG scale</dt>
+                                <dd><?= $batch['cfg_scale'] ?></dd>
+                            </dl>
+                            <dl class="col-sm-4">
+                                <dt>steps</dt>
+                                <dd><?= $batch['steps'] ?></dd>
+                            </dl>
+                            <dl class="col-sm-4">
+                                <dt>size</dt>
+                                <dd>
+                                    <?= $batch['width'] ?>
+                                    &times;
+                                    <?= $batch['height'] ?>
+                                </dd>
+                            </dl>
+                        </div>
                     </article>
                     <input type="checkbox">
                 <?php endforeach; ?>

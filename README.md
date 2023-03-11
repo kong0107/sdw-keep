@@ -20,8 +20,8 @@ Generated images are saved to `/outputs/`.
 1. Visit `./index.php`.
 
 
-## Interrupt current batch
+## Stop requesting
 
-Run `node interrupt`.
-This does *NOT* halt the server immediately;
-*Stable Diffusion WebUI* would finish the current step and return ongoing image.
+Run `node stop`.
+This does *NOT* stop *Stable Diffusion WebUI*.
+It would finish the current step and return ongoing image.

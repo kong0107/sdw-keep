@@ -1,11 +1,16 @@
 {
-    "prompt": "flooded ancient city",
+    "prompt": "Windows XP hill in winter, sunny, cloudy",
     "negative_prompt": "EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, error, watermark, username",
     "sampler_name": "DPM++ 2S a Karras",
     "steps": 16,
     "width": 768,
     "height": 512,
-    "batch_size": 1,
+
+    "enable_hr": false,
+    "hr_upscaler": "ESRGAN_4x",
+    "hr_scale": 1.5,
+
+    "batch_size": 2,
     "n_iter": 1,
     "override_settings": {
         "sd_model_checkpoint": "realisticVisionV13_v13.safetensors [c35782bad8]"

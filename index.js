@@ -46,6 +46,13 @@ while(1) {
      * Request for each input.
      */
     for(let i = 0; i < inputs.length; ++i) {
+        try { // If the file exists, stop the program.
+            await fs.unlink('./inputs/stop');
+            inputs.splice(0, Infinity);
+            console.log('interrupted');
+            break;
+        } catch {}
+
         const d = new Date();
         const date = [d.getFullYear(), pad2(d.getMonth() + 1), pad2(d.getDate())].join('-'); // `YYYY-MM-DD` with hyphens
         const time = pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds()); // `HHmmss` without colons
@@ -94,17 +101,6 @@ while(1) {
         delete info.all_negative_prompts;
         delete info.infotexts;
 
-        let brief = name + '\n'
-            + parameters.override_settings.sd_model_checkpoint.split('.')[0]
-            + '\n' + info.sampler_name
-            + '\n' + info.prompt
-        ;
-
-        if(images.length > 1) lineNotify({
-            message: brief,
-            notificationDisabled: true
-        }).catch(console.error);
-
         await fs.writeFile(outputPath,
             JSON.stringify({parameters, info}, null, '\t')
         );
@@ -112,14 +108,18 @@ while(1) {
         /**
          * Save images into multiple files.
          */
+        const brief = name + '\n'
+            + parameters.override_settings.sd_model_checkpoint.split('.')[0]
+            + '\n' + info.sampler_name
+            + '\n' + info.prompt
+        ;
         for(let j = 0; j < images.length; j++) {
             const seed = info.all_seeds[j];
             const imagePath = `./outputs/${date}/${name}-${time}-${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
             lineNotify({
-                message: (images.length > 1) ? seed : brief,
-                imageFile: imagePath,
-                notificationDisabled: true
+                message: j ? ' ' : brief,
+                imageFile: imagePath
             }).catch(console.error);
         }
     }

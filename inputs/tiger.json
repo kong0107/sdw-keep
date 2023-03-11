@@ -1,4 +1,5 @@
 {
+    "disabled": true,
     "prompt": "an anthro male tiger youth, solo, alone, running, face left, in raining city, wearing red boardshorts, wearing athletic shoes, strong thigh, big arms, furry body, kemono, masterpiece, best quality",
     "negative_prompt": "EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, error, text, watermark, username, boobs, female, girl, pussy, girl, woman, women, children, child, cub, alien, bishonen, penis, crossing legs, closed legs, human face, shirt, sleeve, abs, smooth skin, empty eyes, bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, deformed, disfigured, mutation, mutated, extra limbs",
     "sampler_name": "DPM++ 2S a Karras",

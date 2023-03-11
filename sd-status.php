@@ -37,9 +37,12 @@
 <body>
     <header class="container">
         <h1>Stable Diffusion status</h1>
-        <div class="text-end">
+        <nav>
             <a class="btn btn-secondary" href="index.php">view outputs</a>
-        </div>
+            <?php if($progress->state->job_count): ?>
+                <button id="skip" type="button" class="btn btn-danger">skip the current batch</button>
+            <?php endif; ?>
+        </nav>
     </header>
     <main class="container">
         <section>
@@ -109,5 +112,11 @@
     <footer class="container text-end text-muted">
         <time><?= substr($progress->state->job_timestamp, 8, 6) ?></time>
     </footer>
+    <script>
+        document.getElementById('skip').addEventListener('click', event => {
+            event.target.disabled = true;
+            fetch('redirect.php?path=/sdapi/v1/interrupt', {method: 'POST'});
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+{
+    "prompt": "Therianthrope gay orgy, minotaur, ox, tauren, kemono, big muscle, penis, asshole, intercourse, semen, cream pie, masterpiece, best quality",
+    "negative_prompt": "EasyNegative, worst quality, low quality, low resolution, blurry, monochrome, error, cencored, text, watermark, username, girl, pussy, boobs, female, woman, women, vargina, bad anatomy, bad hands, extra fingers, missing fingers, extra digit, fewer digits, cropped, deformed, disfigured, mutation, mutated, extra limbs",
+    "sampler_name": "DPM++ 2S a Karras",
+    "steps": 12,
+    "width": 640,
+    "height": 512,
+    "batch_size": 2,
+    "n_iter": 1,
+    "override_settings": {
+        "sd_model_checkpoint": "chilloutmix_NiPrunedFp32Fix.safetensors [fc2511737a]"
+    },
+    "override_settings_restore_afterwards": false
+}
