@@ -14,6 +14,10 @@ Keep requesting [Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable
 Generated images are saved to `/outputs/`.
 
 
+## Config
+
+Copy `config.sample.json` to `config.json` and edit the clone.
+
 ## See output
 
 0. Run a *HTTP Server* which has *PHP* module.

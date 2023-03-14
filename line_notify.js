@@ -1,11 +1,15 @@
 import * as fs from 'node:fs';
 
-const token = JSON.parse(fs.readFileSync('config.json')).line_token;
 const boundary = 'whateverYouWant';
 
-export default function lineNotify(params) {
+export default function lineNotify(params, token) {
     if(typeof params === 'string') params = {message: params};
     if(!params.message) params = {message: ' ', ...params}; // `message` must come before others.
+    if(!token) {
+        token = params.token;
+        delete params.token;
+    }
+    if(!token) return Promise.resolve('no token');
 
     const headers = {Authorization: 'Bearer ' + token};
     let body;

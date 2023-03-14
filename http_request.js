@@ -1,17 +1,24 @@
-import { request } from 'node:http';
+import { request as nativeHttpRequest } from 'node:http';
+import { request as nativeHttpsRequest } from 'node:https';
 
-export default function httpRequestJSON(url, options) {
+export default function httpRequest(url, options) {
+    const request = ((new URL(url)).protocol === 'http:')
+        ? nativeHttpRequest : nativeHttpsRequest;
     return new Promise((resolve, reject) => {
         const req = request(url, options, res => {
             let rawData = '';
             res.setEncoding('utf8');
             res.on('data', chunk => rawData += chunk);
             res.on('end', () => {
-                try {
-                    resolve(JSON.parse(rawData));
-                } catch(err) {
-                    reject(err);
-                }
+                // const headers = {};
+                // for(let i = 0; i < res.rawHeaders.length; i += 2)
+                //     headers[res.rawHeaders[i]] = res.rawHeaders[i + 1];
+                resolve({
+                    // headers,
+                    statusCode: res.statusCode,
+                    statusMessage: res.statusMessage,
+                    body: rawData
+                });
             });
             res.on('error', reject);
         });

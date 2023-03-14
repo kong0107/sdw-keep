@@ -1,5 +1,6 @@
 <?php
-    $url_api = 'http://127.0.0.1:7860/sdapi/v1/';
+    $config = json_decode(file_get_contents('./config.json'));
+    $url_api = $config->serverOrigin . '/sdapi/v1/';
 
     $memory = file_get_contents($url_api . 'memory');
     if(false === $memory) {

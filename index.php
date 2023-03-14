@@ -62,10 +62,11 @@ foreach(scandir('./outputs') as $dir_name) {
         else {
             $content = file_get_contents($dir_path . '/' . $basename);
             $content = json_decode($content);
-            if(isset($content->errors)) continue;
+            if(isset($content->detail)) continue;
+
             $info = $content->info;
             $data[$key]['info'] = array(
-                'model' => $content->parameters->override_settings->sd_model_checkpoint,
+                'model' => $content->model ?? $content->parameters?->override_settings?->sd_model_checkpoint,
                 'sampler' => $info->sampler_name,
                 'prompt' => $info->prompt,
                 'negative_prompt' => $info->negative_prompt,
