@@ -28,7 +28,7 @@
                 time: <HHmmss>,
                 seed: \d+
             }, ...]
-        }],
+        }, ...],
         ...
     }
  *
@@ -130,6 +130,7 @@ unset($data);
             height: 13.5em;
             max-width: 24em;
             object-fit: scale-down;
+            cursor: pointer;
         }
         details:not([open]), summary {
             cursor: pointer;
@@ -139,6 +140,7 @@ unset($data);
         }
         [type=checkbox] {
             width: 15em;
+            cursor: pointer;
         }
         [type=checkbox]::after {
             content: 'Show Previous';
@@ -190,7 +192,7 @@ unset($data);
 
                             <dl class="col-lg-6">
                                 <dt>prompt</dt>
-                                <dd><?= $batch['prompt'] ?></dd>
+                                <dd><?= htmlentities($batch['prompt']) ?></dd>
                             </dl>
                             <dl class="col-lg-6">
                                 <dt>negative prompt</dt>
@@ -226,15 +228,39 @@ unset($data);
     <script>
         kongUtil.use();
         const lightbox = $('#lightbox');
-        listen(lightbox, 'click', event => {
-            lightbox.classList.add('d-none');
-        });
-        $$('main img').forEach(img => {
+        const images = $$('main img');
+
+        images.forEach(img => {
             listen(img, 'click', () => {
                 $('img', lightbox).src = img.src;
                 lightbox.classList.remove('d-none');
             });
-        })
+        });
+
+        listen(lightbox, 'click', () => {
+            lightbox.classList.add('d-none');
+            lightbox.removeAttribute('src');
+        });
+
+        listen(document, 'keydown', event => {
+            if(event.ctrlKey || event.altKey || event.shiftKey) return;
+
+            let diff;
+            switch(event.key) {
+                case 'ArrowLeft': diff = -1; break;
+                case 'ArrowRight': diff = 1; break;
+                default: return;
+            }
+
+            const current = $('img', lightbox).src;
+            const currentIndex = images.findIndex(img => img.src === current);
+            if(currentIndex === -1) console.error('no image');
+
+            const newIndex = currentIndex + diff;
+            if(newIndex < 0 || newIndex >= images.length)
+                lightbox.dispatchEvent(new Event('click'));
+            else $('img', lightbox).src = images[newIndex].src;
+        });
     </script>
 </body>
 </html>

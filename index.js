@@ -41,7 +41,6 @@ while(1) {
     console.log(inputs.map(i => i.name + ' \xd7' + (i.batch_size * i.n_iter)).join(', '));
     // console.debug(inputs);
 
-
     /**
      * Request for each input.
      */
@@ -117,14 +116,16 @@ while(1) {
             const seed = info.all_seeds[j];
             const imagePath = `./outputs/${date}/${name}-${time}-${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
-            lineNotify({
+            await lineNotify({
                 message: j ? ' ' : brief,
                 imageFile: imagePath
             }).catch(console.error);
         }
     }
 
-    // break;
+    console.log('');
+    if(!inputs.length)
+        break;
 }
 
 function pad2(num) {
