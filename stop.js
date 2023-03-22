@@ -6,4 +6,7 @@ const config = JSON.parse(await readFile('./config.json'));
 writeFile('./inputs/stop', 'kong0107');
 fetch(config.serverOrigin + '/sdapi/v1/interrupt', {
     method: 'POST'
-}).then(res => console.log(res.ok));
+}).then(
+    res => console.log(res.status, res.statusText),
+    console.error
+);

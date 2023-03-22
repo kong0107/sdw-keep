@@ -8,15 +8,17 @@
  * 4. Go to step 1.
  */
 import * as fs from 'node:fs/promises';
-import lineNotify from './line_notify.js';
+import showElapsedTime from './show_elapsed_time.js';
 import httpRequest from './http_request.js'; // note: fetch() has timeout limit 300 seconds.
 
-const config = JSON.parse(await fs.readFile('./config.json'));
+import lineNotify from './line_notify.js';
+import sendDiscordMessage from './discord_webhook.js';
 
-// await lineNotify('Stable Diffusion WebUI keep requesting');
+const config = JSON.parse(await fs.readFile('./config.json'));
+// notify('Stable Diffusion WebUI');
 while(1) {
     /**
-     * Read and sort input files by ctime.
+     * Read and sort input files by ctime. Check this at the beginning of every loop.
      */
     const inputs = [];
     const inputFileNames = await fs.readdir('./inputs/');
@@ -26,9 +28,10 @@ while(1) {
         const inputPath = './inputs/' + inputFileNames[i];
         try {
             const stat = await fs.stat(inputPath);
-            let content = await fs.readFile(inputPath);
-            content = JSON.parse(content);
+            const content = JSON.parse(await fs.readFile(inputPath));
             if(content.disabled) continue;
+            if(content?.override_settings?.sd_model_checkpoint)
+                content.override_settings_restore_afterwards = false;
             inputs.push({name, ctime: stat.ctimeMs, ...content});
         }
         catch {
@@ -62,34 +65,31 @@ while(1) {
         const name = inputs[i].name;
         const image_quantity = inputs[i].batch_size * inputs[i].n_iter;
         const plural = (image_quantity > 1) ? 's': '';
-        const intervalID = setInterval(() => process.stdout.write('.'), 3000);
-        console.time(name);
-        console.log(`Requesting for ${image_quantity} ${name} image${plural} with size ${inputs[i].width}\xd7${inputs[i].height}`);
+        const stopTimer = showElapsedTime();
+        console.log(`Requesting for ${image_quantity} ${name} image${plural} with size ${inputs[i].width}\xd7${inputs[i].height} (${inputs[i].ctime})`);
+        console.log('prompt: ' + inputs[i].prompt.substring(0, 60) + '...');
 
         let result;
         try {
             // if(i) await new Promise(resolve => setTimeout(resolve, 3000));
-
             result = await httpRequest(config.serverOrigin + '/sdapi/v1/txt2img', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(inputs[i])
             });
-            clearInterval(intervalID);
-            process.stdout.write('\n');
+            stopTimer();
 
             if(result.statusCode !== 200) { // server responsed, but error
                 console.warn(result.statusCode, result.statusMessage);
-                lineNotify(result);
+                notify(result.statusMessage, config.lineToken);
                 result = {detail: [result]};
             }
             else result = JSON.parse(result.body);
         }
         catch(err) { // no such server
-            clearInterval(intervalID);
-            process.stdout.write('\n');
+            stopTimer();
             console.error(err);
-            lineNotify(err.toString(), config.lineToken);
+            notify(err.toString(), config.lineToken);
             inputs.splice(0, Infinity);
             break;
         }
@@ -98,13 +98,13 @@ while(1) {
          * Save information or error into one file.
          */
         const outputPath = `./outputs/${date}/${name}-${time}.json`;
-        const {detail: errors, images, parameters} = result;
-        if(errors || !images || !images.length) {
+        const {detail, images, parameters} = result;
+        if(detail || !images || !images.length) {
             console.warn('no output');
-            await fs.writeFile(outputPath, JSON.stringify(result, null, '\t'));
+            fs.writeFile(outputPath, JSON.stringify(result, null, '\t'));
+            await notify(JSON.stringify(detail[0], null, '\t'));
             continue;
         }
-        console.timeEnd(name);
         console.log(`Received ${images.length} image` + (images.length > 1 ? 's' : ''));
 
         const info = JSON.parse(result.info);
@@ -122,13 +122,10 @@ while(1) {
             output.model = models[models.length - 1].title;
             console.log('by using default model', output.model);
         }
-
-        await fs.writeFile(outputPath,
-            JSON.stringify(output, null, '\t')
-        );
+        await fs.writeFile(outputPath, JSON.stringify(output, null, '\t'));
 
         /**
-         * Save images into multiple files and send LINE notify.
+         * Save images into multiple files and send notification(s).
          */
         const message = [
             name,
@@ -140,15 +137,12 @@ while(1) {
             const seed = info.all_seeds[j];
             const imagePath = `./outputs/${date}/${name}-${time}-${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
-            await lineNotify({
-                message: j ? ' ' : message,
-                imageFile: imagePath,
-                token: config.lineToken
-            }).catch(console.error);
         }
+        notify(message, images.map(base64 => Buffer.from(base64, 'base64')));
+        console.log(''); // newline
     }
 
-    console.log('\n');
+    console.log('');
     if(!inputs.length)
         break;
 
@@ -157,4 +151,46 @@ while(1) {
 
 function pad2(num) {
     return num.toString().padStart(2, '0');
+}
+
+/**
+ *
+ * @param {string} message
+ * @param {Array.<Buffer>} images
+ * @returns {Promise.<undefined>}
+ *
+ * If Discord is enabled, then the URL it responses would be sent to LINE
+ * to save network traffic.
+ *
+ */
+async function notify(message, images) {
+    const {lineToken, discordWebhook} = config;
+    let imageUrls = null;
+    if(discordWebhook) {
+        if(images) {
+            const res = await sendDiscordMessage({
+                content: message,
+                files: images
+            }, discordWebhook).then(res => res.json());
+            imageUrls = res.attachments.map(att => att.url);
+        }
+        else await sendDiscordMessage(message, discordWebhook);
+    }
+    if(lineToken) {
+        if(!message) message = ' ';
+        if(images) {
+            for(let i = 0; i < images.length; ++i) {
+                const params = {
+                    message: i ? ' ' : message,
+                    token: lineToken
+                };
+                if(discordWebhook) {
+                    params.imageFullsize = params.imageThumbnail = imageUrls[i];
+                }
+                else params.imageFile = images[i];
+                await lineNotify(params, lineToken);
+            }
+        }
+        else await lineNotify(message, lineToken);
+    }
 }

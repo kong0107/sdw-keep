@@ -38,7 +38,8 @@ $data = array();
 /**
  * 依檔名順序建出結構。
  */
-foreach(scandir('./outputs') as $dir_name) {
+$date_counts = 0;
+foreach(scandir('./outputs', SCANDIR_SORT_DESCENDING) as $dir_name) {
     if(!preg_match('/^(\\d{4})-(\\d{2})-(\\d{2})$/', $dir_name)) continue;
 
     $dir_path = './outputs/' . $dir_name;
@@ -67,7 +68,7 @@ foreach(scandir('./outputs') as $dir_name) {
             $info = $content->info;
             $data[$key]['info'] = array(
                 'model' => $content->model ?? $content->parameters?->override_settings?->sd_model_checkpoint,
-                'sampler' => $info->sampler_name,
+                'sampler_name' => $info->sampler_name,
                 'prompt' => $info->prompt,
                 'negative_prompt' => $info->negative_prompt,
                 'cfg_scale' => $info->cfg_scale,
@@ -77,6 +78,7 @@ foreach(scandir('./outputs') as $dir_name) {
             );
         }
     }
+    if(++$date_counts >= 5) break;
 }
 
 /**
@@ -181,39 +183,41 @@ unset($data);
                                 </figure>
                             <?php endforeach; ?>
                         </div>
+                        <button type="button" class="copyMarkdown btn btn-primary">copy MD</button>
+                        <button type="button" class="copyJSON btn btn-primary">copy JSON</button>
                         <div class="row">
                             <dl class="col-md-6">
                                 <dt>model</dt>
-                                <dd><?= $batch['model'] ?></dd>
+                                <dd title="model"><?= $batch['model'] ?></dd>
                             </dl>
                             <dl class="col-md-6">
                                 <dt>sampler</dt>
-                                <dd><?= $batch['sampler'] ?></dd>
+                                <dd title="sampler_name"><?= $batch['sampler_name'] ?></dd>
                             </dl>
 
                             <dl class="col-lg-6">
                                 <dt>prompt</dt>
-                                <dd><?= htmlentities($batch['prompt']) ?></dd>
+                                <dd title="prompt"><?= htmlentities($batch['prompt']) ?></dd>
                             </dl>
                             <dl class="col-lg-6">
                                 <dt>negative prompt</dt>
-                                <dd><?= $batch['negative_prompt'] ?></dd>
+                                <dd title="negative_prompt"><?= $batch['negative_prompt'] ?></dd>
                             </dl>
 
                             <dl class="col-sm-4">
                                 <dt>CFG scale</dt>
-                                <dd><?= $batch['cfg_scale'] ?></dd>
+                                <dd title="cfg_scale"><?= $batch['cfg_scale'] ?></dd>
                             </dl>
                             <dl class="col-sm-4">
                                 <dt>steps</dt>
-                                <dd><?= $batch['steps'] ?></dd>
+                                <dd title="steps"><?= $batch['steps'] ?></dd>
                             </dl>
                             <dl class="col-sm-4">
                                 <dt>size</dt>
-                                <dd>
-                                    <?= $batch['width'] ?>
+                                <dd title="size">
+                                    <span title="width"><?= $batch['width'] ?></span>
                                     &times;
-                                    <?= $batch['height'] ?>
+                                    <span title="height"><?= $batch['height'] ?></span>
                                 </dd>
                             </dl>
                         </div>
@@ -261,6 +265,39 @@ unset($data);
             if(newIndex < 0 || newIndex >= images.length)
                 lightbox.dispatchEvent(new Event('click'));
             else $('img', lightbox).src = images[newIndex].src;
+        });
+
+        $$('.copyMarkdown').forEach(btn => {
+            listen(btn, 'click', () => {
+                let result = '';
+                const con = btn.closest('article');
+                ['prompt', 'negative_prompt'].forEach(param => {
+                    result += `# ${param}\n` + $(`[title=${param}]`, con).textContent + '\n\n';
+                });
+                result += '# config\n';
+                ['model', 'sampler_name', 'cfg_scale', 'steps'].forEach(param => {
+                    result += `- ${param}: ` + $(`[title=${param}]`, con).textContent + '\n';
+                });
+                result += '- siez: ' + $(`[title=size]`, con).textContent.replaceAll(/\s+/g, '');
+                navigator.clipboard.writeText(result).catch(console.error);
+            });
+        });
+        $$('.copyJSON').forEach(btn => {
+            listen(btn, 'click', () => {
+                const obj = {};
+                const con = btn.closest('article');
+                ['prompt', 'negative_prompt', 'sampler_name'].forEach(param => {
+                    obj[param] = $(`[title=${param}]`, con).textContent;
+                });
+                ['cfg_scale', 'steps', 'width', 'height'].forEach(param => {
+                    obj[param] = parseFloat($(`[title=${param}]`, con).textContent);
+                });
+                obj.n_iter = obj.batch_size = 1;
+                obj.override_settings = {
+                    sd_model_checkpoint: $('[title=model]', con).textContent
+                };
+                navigator.clipboard.writeText(JSON.stringify(obj, null, '\t')).catch(console.error);
+            });
         });
     </script>
 </body>
