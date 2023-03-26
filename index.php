@@ -78,7 +78,7 @@ foreach(scandir('./outputs', SCANDIR_SORT_DESCENDING) as $dir_name) {
             );
         }
     }
-    if(++$date_counts >= 5) break;
+    if(++$date_counts >= 10) break;
 }
 
 /**

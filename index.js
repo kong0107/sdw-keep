@@ -124,13 +124,10 @@ while(1) {
         }
         await fs.writeFile(outputPath, JSON.stringify(output, null, '\t'));
 
-        /**
-         * Save images into multiple files and send notification(s).
-         */
+        // Save images.
         const message = [
             name,
             output.model,
-            info.sampler_name,
             info.prompt
         ].join('\n');
         for(let j = 0; j < images.length; j++) {
@@ -138,7 +135,23 @@ while(1) {
             const imagePath = `./outputs/${date}/${name}-${time}-${seed}.png`;
             await fs.writeFile(imagePath, images[j], {encoding: 'base64'});
         }
-        notify(message, images.map(base64 => Buffer.from(base64, 'base64')));
+
+        // Send notification(s).
+        if(!inputs[i]?.skip_notify) {
+            const shortDate = date.slice(2, 4) + date.slice(5, 7) + date.slice(8);
+            const files = info.all_seeds.map((seed, i) => ({
+                type: 'image/png',
+                filename: `${name}-${shortDate}-${time}-${seed}.png`,
+                value: Buffer.from(images[i], 'base64')
+            }));
+            files.push({
+                type: 'application/json',
+                filename: `${name}-${shortDate}-${time}.json`,
+                value: JSON.stringify(output, null, '\t')
+            });
+            notify(message, files);
+        }
+
         console.log(''); // newline
     }
 
@@ -154,43 +167,54 @@ function pad2(num) {
 }
 
 /**
+ * Send message(s) to Discord and / or LINE.
+ * @param {String} text
+ * @param {Array.<Object>} files
+ * @param {String} files[].type - mime type
+ * @param {String} files[].filename
+ * @param {Buffer | String} files[].value
  *
- * @param {string} message
- * @param {Array.<Buffer>} images
- * @returns {Promise.<undefined>}
+ * One LINE notify API contains only at most one image,
+ * so it shall be called several times if there are more than 1 image.
  *
- * If Discord is enabled, then the URL it responses would be sent to LINE
+ * If Discord message is enabled,
+ * then the image URLs from the response are used
  * to save network traffic.
- *
  */
-async function notify(message, images) {
+async function notify(text, files) {
     const {lineToken, discordWebhook} = config;
     let imageUrls = null;
     if(discordWebhook) {
-        if(images) {
-            const res = await sendDiscordMessage({
-                content: message,
-                files: images
-            }, discordWebhook).then(res => res.json());
-            imageUrls = res.attachments.map(att => att.url);
+        const data = {content: text};
+        if(files?.length) data.files = files;
+        const res = await sendDiscordMessage(data, discordWebhook);
+        if(res.status === 200) {
+            const resBody = await res.json();
+            imageUrls = resBody.attachments
+                ?.filter(a => a.content_type.startsWith('image/'))
+                ?.map(a => a.url)
+            ;
         }
-        else await sendDiscordMessage(message, discordWebhook);
     }
     if(lineToken) {
-        if(!message) message = ' ';
-        if(images) {
-            for(let i = 0; i < images.length; ++i) {
-                const params = {
-                    message: i ? ' ' : message,
-                    token: lineToken
-                };
-                if(discordWebhook) {
-                    params.imageFullsize = params.imageThumbnail = imageUrls[i];
-                }
-                else params.imageFile = images[i];
-                await lineNotify(params, lineToken);
+        if(imageUrls?.length) {
+            for(let i = 0; i < imageUrls.length; ++i) {
+                await lineNotify({
+                    message: i ? text : ' ',
+                    imageFullsize: imageUrls[i],
+                    imageThumbnail: imageUrls[i]
+                }, lineToken);
             }
         }
-        else await lineNotify(message, lineToken);
+        else if(files?.length) {
+            for(let i = 0; i < files.length; ++i) {
+                if(!files[i].type.startsWith('image/')) continue;
+                await lineNotify({
+                    message: i ? text : ' ',
+                    imageFile: files[i].value
+                }, lineToken);
+            }
+        }
+        else await lineNotify(text, lineToken);
     }
 }

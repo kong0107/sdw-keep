@@ -2,6 +2,17 @@
 
 import { createBoundary, createFormData } from './form_data.js';
 
+/**
+ *
+ * @param {Object | string} data
+ * @param {String} [data.content]
+ * @param {Array.<Object>} [data.files]
+ * @param {Buffer} data.files[].data
+ * @param {string} [data.files[].type] - mime type
+ * @param {string} [data.files[].filename] - filename
+ * @param {string} webhook - Discord type-1 webhook URL to execute
+ * @returns {Promise.<Response>}
+ */
 export default function sendDiscordMessage(data, webhook) {
     if(typeof data === 'string') data = {content: data};
     if(!data.files || data.files.length === 0) return fetch(webhook, {
@@ -17,18 +28,25 @@ export default function sendDiscordMessage(data, webhook) {
     if(data.content.trim()) payload.content = data.content;
     payload.attachments = [];
 
-    data.files.forEach((buffer, index) => {
-        const filename = index + '.png';
+    data.files.forEach((struct, index) => {
+        const part = {
+            name: `files[${index}]`,
+            value: struct.value
+        };
+
+        let filename = struct.filename;
+        if(struct.type) {
+            part.type = struct.type;
+            if(!filename) filename = index + '.' + struct.type.split('/')[1];
+        }
+        if(!filename) filename = index.toString();
+        part.filename = filename;
+
         payload.attachments.push({
             id: index,
             filename
         });
-        formDataParts.push({
-            name: `files[${index}]`,
-            filename,
-            type: 'image/png',
-            value: buffer
-        });
+        formDataParts.push(part);
     });
     formDataParts.unshift({
         name: 'payload_json',

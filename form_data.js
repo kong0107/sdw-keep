@@ -11,7 +11,7 @@
  *
  * Notes:
  * - Web API has native `FormData` interface.
- *   This function is used in Node.js if one do not want install other packages.
+ *   This function is used in Node.js if one do not want to install other packages.
  * - `boundary` is also used in the header of HTTP request.
  */
 export function createFormData(parts, boundary) {
@@ -20,7 +20,8 @@ export function createFormData(parts, boundary) {
         buffers.push(`--${boundary}\r\nContent-Disposition: form-data; name="${part.name}"`);
         if(part.filename) buffers.push(`; filename="${part.filename}"`);
         if(part.type) buffers.push(`\r\nContent-Type: ${part.type}`);
-        buffers.push('\r\n\r\n', part.value, '\r\n'); // note that `part.value` may not be string; therefore template literals are not used.
+        buffers.push('\r\n\r\n', part.value, '\r\n');
+        // note that `part.value` may not be string; so string concatenation may cause error.
     }
     buffers.push(`--${boundary}--\r\n`);
     buffers.forEach((b, i) => {

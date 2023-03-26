@@ -8,15 +8,20 @@ let res;
 
 res = await sendDiscordMessage({
     content: (new Date()).toLocaleTimeString(),
-    files: [image]
-}, config.discordWebhook).then(res => res.json());
-console.log(res);
+    files: [{
+        filename: 'qq.png',
+        type: 'image/png',
+        value: image
+    }]
+}).catch(console.error);
 
-const imageUrls = res.attachments.map(att => att.url);
+console.log(res.status);
 
-res = await lineNotify({
-    message: (new Date()).toLocaleTimeString(),
-    imageThumbnail: imageUrls[0],
-    imageFullsize: imageUrls[0]
-}, config.lineToken).then(res => res.json());
-console.log(res);
+// const imageUrls = res.attachments.map(att => att.url);
+
+// res = await lineNotify({
+//     message: (new Date()).toLocaleTimeString(),
+//     imageThumbnail: imageUrls[0],
+//     imageFullsize: imageUrls[0]
+// }, config.lineToken).then(res => res.json());
+// console.log(res);
