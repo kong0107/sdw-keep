@@ -1,6 +1,6 @@
 /**
  *
- * 1. Read and sort input files by ctime.
+ * 1. Read and sort input settings.
  * 2. Request.
  * 3. Save the info and images separately.
  *    `./outputs/<YYYY-MM-DD>/<name>-<HHmmss>.json`
@@ -18,7 +18,8 @@ const config = JSON.parse(await fs.readFile('./config.json'));
 // notify('Stable Diffusion WebUI');
 while(1) {
     /**
-     * Read and sort input files by ctime. Check this at the beginning of every loop.
+     * Read and sort input files by model.
+     * Check this at the beginning of every loop.
      */
     const inputs = [];
     const inputFileNames = await fs.readdir('./inputs/');
@@ -27,12 +28,11 @@ while(1) {
         const name = inputFileNames[i].slice(0, -5);
         const inputPath = './inputs/' + inputFileNames[i];
         try {
-            const stat = await fs.stat(inputPath);
             const content = JSON.parse(await fs.readFile(inputPath));
             if(content.disabled) continue;
-            if(content?.override_settings?.sd_model_checkpoint)
-                content.override_settings_restore_afterwards = false;
-            inputs.push({name, ctime: stat.ctimeMs, ...content});
+            const model = content?.override_settings?.sd_model_checkpoint;
+            if(model) content.override_settings_restore_afterwards = false;
+            inputs.push({name, model, ...content});
         }
         catch {
             console.warn('Unable to load ' + inputFileNames[i]);
@@ -42,7 +42,7 @@ while(1) {
         console.warn('No valid input file');
         break;
     }
-    inputs.sort((a, b) => b.ctime - a.ctime);
+    inputs.sort((a, b) => a.model > b.model ? 1 : -1);
     console.log(inputs.map(i => i.name + ' \xd7' + (i.batch_size * i.n_iter)).join(', '));
     // console.debug(inputs);
 
@@ -66,12 +66,12 @@ while(1) {
         const image_quantity = inputs[i].batch_size * inputs[i].n_iter;
         const plural = (image_quantity > 1) ? 's': '';
         const stopTimer = showElapsedTime();
-        console.log(`Requesting for ${image_quantity} ${name} image${plural} with size ${inputs[i].width}\xd7${inputs[i].height} (${inputs[i].ctime})`);
+        console.log(`Requesting for ${image_quantity} ${name} image${plural} with size ${inputs[i].width}\xd7${inputs[i].height}`);
         console.log('prompt: ' + inputs[i].prompt.substring(0, 60) + '...');
 
         let result;
         try {
-            // if(i) await new Promise(resolve => setTimeout(resolve, 3000));
+            if(i) await new Promise(resolve => setTimeout(resolve, 100));
             result = await httpRequest(config.serverOrigin + '/sdapi/v1/txt2img', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -113,9 +113,13 @@ while(1) {
         delete info.infotexts;
 
         const output = {
-            parameters,
+            model: parameters?.override_settings?.sd_model_checkpoint,
+            elapsed_time: Date.now() - d.getTime(),
+            parameters: Object.assign({
+                // prompt: parameters.promt,
+                negative_prompt: parameters.negative_prompt
+            }, parameters), // re-order the attributes in object
             info,
-            model: parameters?.override_settings?.sd_model_checkpoint
         };
         if(!output.model) {
             const models = await fetch(config.serverOrigin + '/sdapi/v1/sd-models').then(res => res.json());
@@ -159,7 +163,7 @@ while(1) {
     if(!inputs.length)
         break;
 
-    // await new Promise(resolve => setTimeout(resolve, 10000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 }
 
 function pad2(num) {
@@ -197,6 +201,7 @@ async function notify(text, files) {
         }
     }
     if(lineToken) {
+        return;
         if(imageUrls?.length) {
             for(let i = 0; i < imageUrls.length; ++i) {
                 await lineNotify({

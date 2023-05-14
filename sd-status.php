@@ -11,6 +11,7 @@
 
     $models = json_decode(file_get_contents($url_api . 'sd-models'));
     $samplers = json_decode(file_get_contents($url_api . 'samplers'));
+    $upscalers = json_decode(file_get_contents($url_api . 'upscalers'));
     $progress = json_decode(file_get_contents($url_api . 'progress'));
 
     // $apis = array(
@@ -30,7 +31,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="30">
+    <!-- <meta http-equiv="refresh" content="5"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stable Diffusion status</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
@@ -89,7 +90,7 @@
             <?php endif; ?>
         </section>
         <div class="row">
-            <section class="col-lg-8">
+            <section class="col-lg-6">
                 <h2>model list</h2>
                 <ul>
                     <?php
@@ -100,11 +101,19 @@
                     ?>
                 </ul>
             </section>
-            <section class="col-lg-4">
+            <section class="col-lg-3">
                 <h2>sampler list</h2>
                 <ul>
                     <?php foreach($samplers as $sampler): ?>
                         <li><?= $sampler->name ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </section>
+            <section class="col-lg-3">
+                <h2>upscaler list</h2>
+                <ul>
+                    <?php foreach($upscalers as $upscaler): ?>
+                        <li><?= $upscaler->name ?></li>
                     <?php endforeach; ?>
                 </ul>
             </section>

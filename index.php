@@ -33,12 +33,17 @@
     }
  *
  */
+
+// 顯示限制。
+$day_limit = intval($_GET['day_limit'] ?? 0);
+if($day_limit <= 0) $day_limit = 3;
+
 $data = array();
 
 /**
  * 依檔名順序建出結構。
  */
-$date_counts = 0;
+$day_counts = 0;
 foreach(scandir('./outputs', SCANDIR_SORT_DESCENDING) as $dir_name) {
     if(!preg_match('/^(\\d{4})-(\\d{2})-(\\d{2})$/', $dir_name)) continue;
 
@@ -78,7 +83,7 @@ foreach(scandir('./outputs', SCANDIR_SORT_DESCENDING) as $dir_name) {
             );
         }
     }
-    if(++$date_counts >= 10) break;
+    if(++$day_counts >= $day_limit) break;
 }
 
 /**
@@ -95,13 +100,14 @@ $struct = array();
 foreach($data as $batch) {
     extract($batch);
     if(!isset($struct[$name])) $struct[$name] = array();
-    $json = json_encode($info);
-    if(!isset($struct[$name][$json])) {
-        $struct[$name][$json] = $info;
-        $struct[$name][$json]['images'] = array();
+    $hash = hash('xxh3', json_encode($info));
+
+    if(!isset($struct[$name][$hash])) {
+        $struct[$name][$hash] = $info;
+        $struct[$name][$hash]['images'] = array();
     }
     foreach($images as $seed) {
-        $struct[$name][$json]['images'][] = array(
+        $struct[$name][$hash]['images'][] = array(
             'date' => $date,
             'time' => $time,
             'seed' => $seed
@@ -160,6 +166,13 @@ unset($data);
         <div class="text-end">
             <a class="btn btn-secondary" href="sd-status.php">check server status</a>
         </div>
+        <form class="d-flex mb-2">
+            顯示天數：
+            <div>
+                <input name="day_limit" type="number" min="1" value="<?= $day_limit ?>" class="form-control">
+            </div>
+            <input type="submit" class="btn btn-success">
+        </form>
         <nav>
             <?php foreach(array_keys($struct) as $name): ?>
                 <a class="btn btn-primary" href="#<?= $name ?>"><?= $name ?></a>

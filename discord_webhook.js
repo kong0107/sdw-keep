@@ -28,7 +28,7 @@ export default function sendDiscordMessage(data, webhook) {
     if(data.content.trim()) payload.content = data.content;
     payload.attachments = [];
 
-    data.files.forEach((struct, index) => {
+    data.files.forEach?.((struct, index) => {
         const part = {
             name: `files[${index}]`,
             value: struct.value
