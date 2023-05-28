@@ -15,7 +15,7 @@ import lineNotify from './line_notify.js';
 import sendDiscordMessage from './discord_webhook.js';
 
 const config = JSON.parse(await fs.readFile('./config.json'));
-// notify('Stable Diffusion WebUI');
+
 while(1) {
     /**
      * Read and sort input files by model.
@@ -39,11 +39,12 @@ while(1) {
         }
     }
     if(inputs.length === 0) {
-        console.warn('No valid input file');
-        break;
+        console.log('No valid input file. Check later.');
+        await new Promise(resolve => setTimeout(resolve, 6000));
+        continue;
     }
     inputs.sort((a, b) => a.model > b.model ? 1 : -1);
-    console.log(inputs.map(i => i.name + ' \xd7' + (i.batch_size * i.n_iter)).join(', '));
+    console.log(inputs.map(i => i.name + ' \xd7' + (i.batch_size * i.n_iter)).join(', ') + '\n');
     // console.debug(inputs);
 
     /**
@@ -81,7 +82,6 @@ while(1) {
 
             if(result.statusCode !== 200) { // server responsed, but error
                 console.warn(result.statusCode, result.statusMessage);
-                notify(result.statusMessage, config.lineToken);
                 result = {detail: [result]};
             }
             else result = JSON.parse(result.body);
@@ -89,7 +89,6 @@ while(1) {
         catch(err) { // no such server
             stopTimer();
             console.error(err);
-            notify(err.toString(), config.lineToken);
             inputs.splice(0, Infinity);
             break;
         }
@@ -102,7 +101,6 @@ while(1) {
         if(detail || !images || !images.length) {
             console.warn('no output');
             fs.writeFile(outputPath, JSON.stringify(result, null, '\t'));
-            await notify(JSON.stringify(detail[0], null, '\t'));
             continue;
         }
         console.log(`Received ${images.length} image` + (images.length > 1 ? 's' : ''));
@@ -159,9 +157,8 @@ while(1) {
         console.log(''); // newline
     }
 
-    console.log('');
-    if(!inputs.length)
-        break;
+    // console.log('');
+    if(!inputs.length) break;
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 }
@@ -169,6 +166,7 @@ while(1) {
 function pad2(num) {
     return num.toString().padStart(2, '0');
 }
+
 
 /**
  * Send message(s) to Discord and / or LINE.
@@ -188,38 +186,49 @@ function pad2(num) {
 async function notify(text, files) {
     const {lineToken, discordWebhook} = config;
     let imageUrls = null;
+
     if(discordWebhook) {
-        const data = {content: text};
-        if(files?.length) data.files = files;
-        const res = await sendDiscordMessage(data, discordWebhook);
-        if(res.status === 200) {
-            const resBody = await res.json();
-            imageUrls = resBody.attachments
-                ?.filter(a => a.content_type.startsWith('image/'))
-                ?.map(a => a.url)
-            ;
+        try {
+            const data = {content: text};
+            if(files?.length) data.files = files;
+            const res = await sendDiscordMessage(data, discordWebhook);
+            if(res.status === 200) {
+                const resBody = await res.json();
+                imageUrls = resBody.attachments
+                    ?.filter(a => a.content_type.startsWith('image/'))
+                    ?.map(a => a.url)
+                ;
+            }
+        }
+        catch(err) {
+            console.warn('Failed to send discord message', err);
         }
     }
+
     if(lineToken) {
-        return;
-        if(imageUrls?.length) {
-            for(let i = 0; i < imageUrls.length; ++i) {
-                await lineNotify({
-                    message: i ? text : ' ',
-                    imageFullsize: imageUrls[i],
-                    imageThumbnail: imageUrls[i]
-                }, lineToken);
+        try {
+            if(imageUrls?.length) {
+                for(let i = 0; i < imageUrls.length; ++i) {
+                    await lineNotify({
+                        message: i ? text : ' ',
+                        imageFullsize: imageUrls[i],
+                        imageThumbnail: imageUrls[i]
+                    }, lineToken);
+                }
             }
-        }
-        else if(files?.length) {
-            for(let i = 0; i < files.length; ++i) {
-                if(!files[i].type.startsWith('image/')) continue;
-                await lineNotify({
-                    message: i ? text : ' ',
-                    imageFile: files[i].value
-                }, lineToken);
+            else if(files?.length) {
+                for(let i = 0; i < files.length; ++i) {
+                    if(!files[i].type.startsWith('image/')) continue;
+                    await lineNotify({
+                        message: i ? text : ' ',
+                        imageFile: files[i].value
+                    }, lineToken);
+                }
             }
+            else await lineNotify(text, lineToken);
         }
-        else await lineNotify(text, lineToken);
+        catch(err) {
+            console.warn('Failed to send line notify', err);
+        }
     }
 }

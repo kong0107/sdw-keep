@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            font-size: 0;
+        }
+        body {
+            background: #000;
+        }
+        img {
+            object-fit: contain;
+        }
+        main img {
+            height: 50vh;
+        }
+        #lightbox {
+            background-color: #000000a0;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        #lightbox,
+        #lightbox img {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+    <script>
+async function getNewestImages() {
+    const res = await fetch('newest.php');
+    const images = await res.json();
+    const main = document.querySelector('main');
+    main.replaceChildren();
+    for(let i = 0; i < images.length; ++i) {
+        const img = document.createElement('img');
+        img.src = `outputs/${images[i].date}/${images[i].name}`;
+        img.addEventListener('click', openLightbox);
+        main.append(img);
+    }
+}
+
+function openLightbox(event) {
+    const lb = globalThis.lightbox;
+    lb.style.display = 'block';
+    lb.querySelector('img').src = event.target.src;
+}
+
+setInterval(getNewestImages, 2500);
+addEventListener('DOMContentLoaded', () => {
+    getNewestImages();
+    const lb = globalThis.lightbox = document.getElementById('lightbox');
+    lb.addEventListener('click', () => lb.style.display = 'none');
+});
+
+    </script>
+</head>
+<body>
+    <main></main>
+    <div id="lightbox"><img></div>
+</body>
+</html>

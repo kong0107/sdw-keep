@@ -41,6 +41,7 @@
         <h1>Stable Diffusion status</h1>
         <nav>
             <a class="btn btn-secondary" href="index.php">view outputs</a>
+            <button id="refresh-checkpoints" type="button" class="btn btn-info">Refresh Checkpoints</button>
             <?php if($progress->state->job_count): ?>
                 <button id="skip" type="button" class="btn btn-danger">skip the current batch</button>
             <?php endif; ?>
@@ -126,6 +127,11 @@
         document.getElementById('skip').addEventListener('click', event => {
             event.target.disabled = true;
             fetch('redirect.php?path=/sdapi/v1/interrupt', {method: 'POST'});
+        });
+        document.getElementById('refresh-checkpoints').addEventListener('click', event => {
+            event.target.disabled = true;
+            fetch('redirect.php?path=/sdapi/v1/refresh-checkpoints', {method: 'POST'})
+            .then(() => location.reload());
         });
     </script>
 </body>
