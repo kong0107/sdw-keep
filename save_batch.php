@@ -12,7 +12,7 @@ try {
 
     foreach($_POST as $key => $value) {
         if($key === 'sd_model_checkpoint') {
-            $parameters->override_settings->sd_model_checkpoint = $value;
+            $parameters->override_settings = array('sd_model_checkpoint' => $value);
             continue;
         }
         if(isset($parameters->$key)) {

@@ -1,0 +1,398 @@
+[
+    {
+        "code": "1F600",
+        "cldr": "grinning face"
+    },
+    {
+        "code": "1F603",
+        "cldr": "grinning face with big eyes"
+    },
+    {
+        "code": "1F604",
+        "cldr": "grinning face with smiling eyes"
+    },
+    {
+        "code": "1F601",
+        "cldr": "beaming face with smiling eyes"
+    },
+    {
+        "code": "1F606",
+        "cldr": "grinning squinting face"
+    },
+    {
+        "code": "1F605",
+        "cldr": "grinning face with sweat"
+    },
+    {
+        "code": "1F923",
+        "cldr": "rolling on the floor laughing"
+    },
+    {
+        "code": "1F602",
+        "cldr": "face with tears of joy"
+    },
+    {
+        "code": "1F642",
+        "cldr": "slightly smiling face"
+    },
+    {
+        "code": "1F643",
+        "cldr": "upside-down face"
+    },
+    {
+        "code": "1FAE0",
+        "cldr": "melting face"
+    },
+    {
+        "code": "1F609",
+        "cldr": "winking face"
+    },
+    {
+        "code": "1F60A",
+        "cldr": "smiling face with smiling eyes"
+    },
+    {
+        "code": "1F607",
+        "cldr": "smiling face with halo"
+    },
+    {
+        "code": "1F970",
+        "cldr": "smiling face with hearts"
+    },
+    {
+        "code": "1F60D",
+        "cldr": "smiling face with heart-eyes"
+    },
+    {
+        "code": "1F929",
+        "cldr": "star-struck"
+    },
+    {
+        "code": "1F618",
+        "cldr": "face blowing a kiss"
+    },
+    {
+        "code": "1F617",
+        "cldr": "kissing face"
+    },
+    {
+        "code": "263A",
+        "cldr": "smiling face"
+    },
+    {
+        "code": "1F61A",
+        "cldr": "kissing face with closed eyes"
+    },
+    {
+        "code": "1F619",
+        "cldr": "kissing face with smiling eyes"
+    },
+    {
+        "code": "1F972",
+        "cldr": "smiling face with tear"
+    },
+    {
+        "code": "1F60B",
+        "cldr": "face savoring food"
+    },
+    {
+        "code": "1F61B",
+        "cldr": "face with tongue"
+    },
+    {
+        "code": "1F61C",
+        "cldr": "winking face with tongue"
+    },
+    {
+        "code": "1F92A",
+        "cldr": "zany face"
+    },
+    {
+        "code": "1F61D",
+        "cldr": "squinting face with tongue"
+    },
+    {
+        "code": "1F911",
+        "cldr": "money-mouth face"
+    },
+    {
+        "code": "1F917",
+        "cldr": "smiling face with open hands"
+    },
+    {
+        "code": "1F92D",
+        "cldr": "face with hand over mouth"
+    },
+    {
+        "code": "1FAE2",
+        "cldr": "face with open eyes and hand over mouth"
+    },
+    {
+        "code": "1FAE3",
+        "cldr": "face with peeking eye"
+    },
+    {
+        "code": "1F92B",
+        "cldr": "shushing face"
+    },
+    {
+        "code": "1F914",
+        "cldr": "thinking face"
+    },
+    {
+        "code": "1FAE1",
+        "cldr": "saluting face"
+    },
+    {
+        "code": "1F910",
+        "cldr": "zipper-mouth face"
+    },
+    {
+        "code": "1F928",
+        "cldr": "face with raised eyebrow"
+    },
+    {
+        "code": "1F610",
+        "cldr": "neutral face"
+    },
+    {
+        "code": "1F611",
+        "cldr": "expressionless face"
+    },
+    {
+        "code": "1F636",
+        "cldr": "face without mouth"
+    },
+    {
+        "code": "1FAE5",
+        "cldr": "dotted line face"
+    },
+    {
+        "code": "1F60F",
+        "cldr": "smirking face"
+    },
+    {
+        "code": "1F612",
+        "cldr": "unamused face"
+    },
+    {
+        "code": "1F644",
+        "cldr": "face with rolling eyes"
+    },
+    {
+        "code": "1F62C",
+        "cldr": "grimacing face"
+    },
+    {
+        "code": "1F925",
+        "cldr": "lying face"
+    },
+    {
+        "code": "1FAE8",
+        "cldr": "shaking face"
+    },
+    {
+        "code": "1F60C",
+        "cldr": "relieved face"
+    },
+    {
+        "code": "1F614",
+        "cldr": "pensive face"
+    },
+    {
+        "code": "1F62A",
+        "cldr": "sleepy face"
+    },
+    {
+        "code": "1F924",
+        "cldr": "drooling face"
+    },
+    {
+        "code": "1F634",
+        "cldr": "sleeping face"
+    },
+    {
+        "code": "1F637",
+        "cldr": "face with medical mask"
+    },
+    {
+        "code": "1F912",
+        "cldr": "face with thermometer"
+    },
+    {
+        "code": "1F915",
+        "cldr": "face with head-bandage"
+    },
+    {
+        "code": "1F922",
+        "cldr": "nauseated face"
+    },
+    {
+        "code": "1F92E",
+        "cldr": "face vomiting"
+    },
+    {
+        "code": "1F927",
+        "cldr": "sneezing face"
+    },
+    {
+        "code": "1F975",
+        "cldr": "hot face"
+    },
+    {
+        "code": "1F976",
+        "cldr": "cold face"
+    },
+    {
+        "code": "1F974",
+        "cldr": "woozy face"
+    },
+    {
+        "code": "1F635",
+        "cldr": "face with crossed-out eyes"
+    },
+    {
+        "code": "1F92F",
+        "cldr": "exploding head"
+    },
+    {
+        "code": "1F920",
+        "cldr": "cowboy hat face"
+    },
+    {
+        "code": "1F973",
+        "cldr": "partying face"
+    },
+    {
+        "code": "1F978",
+        "cldr": "disguised face"
+    },
+    {
+        "code": "1F60E",
+        "cldr": "smiling face with sunglasses"
+    },
+    {
+        "code": "1F913",
+        "cldr": "nerd face"
+    },
+    {
+        "code": "1F9D0",
+        "cldr": "face with monocle"
+    },
+    {
+        "code": "1F615",
+        "cldr": "confused face"
+    },
+    {
+        "code": "1FAE4",
+        "cldr": "face with diagonal mouth"
+    },
+    {
+        "code": "1F61F",
+        "cldr": "worried face"
+    },
+    {
+        "code": "1F641",
+        "cldr": "slightly frowning face"
+    },
+    {
+        "code": "2639",
+        "cldr": "frowning face"
+    },
+    {
+        "code": "1F62E",
+        "cldr": "face with open mouth"
+    },
+    {
+        "code": "1F62F",
+        "cldr": "hushed face"
+    },
+    {
+        "code": "1F632",
+        "cldr": "astonished face"
+    },
+    {
+        "code": "1F633",
+        "cldr": "flushed face"
+    },
+    {
+        "code": "1F97A",
+        "cldr": "pleading face"
+    },
+    {
+        "code": "1F979",
+        "cldr": "face holding back tears"
+    },
+    {
+        "code": "1F626",
+        "cldr": "frowning face with open mouth"
+    },
+    {
+        "code": "1F627",
+        "cldr": "anguished face"
+    },
+    {
+        "code": "1F628",
+        "cldr": "fearful face"
+    },
+    {
+        "code": "1F630",
+        "cldr": "anxious face with sweat"
+    },
+    {
+        "code": "1F625",
+        "cldr": "sad but relieved face"
+    },
+    {
+        "code": "1F622",
+        "cldr": "crying face"
+    },
+    {
+        "code": "1F62D",
+        "cldr": "loudly crying face"
+    },
+    {
+        "code": "1F631",
+        "cldr": "face screaming in fear"
+    },
+    {
+        "code": "1F616",
+        "cldr": "confounded face"
+    },
+    {
+        "code": "1F623",
+        "cldr": "persevering face"
+    },
+    {
+        "code": "1F61E",
+        "cldr": "disappointed face"
+    },
+    {
+        "code": "1F613",
+        "cldr": "downcast face with sweat"
+    },
+    {
+        "code": "1F629",
+        "cldr": "weary face"
+    },
+    {
+        "code": "1F62B",
+        "cldr": "tired face"
+    },
+    {
+        "code": "1F971",
+        "cldr": "yawning face"
+    },
+    {
+        "code": "1F624",
+        "cldr": "face with steam from nose"
+    },
+    {
+        "code": "1F621",
+        "cldr": "enraged face"
+    },
+    {
+        "code": "1F620",
+        "cldr": "angry face"
+    }
+]

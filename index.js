@@ -61,7 +61,7 @@ while(1) {
         const d = new Date();
         const date = [d.getFullYear(), pad2(d.getMonth() + 1), pad2(d.getDate())].join('-'); // `YYYY-MM-DD` with hyphens
         const time = pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds()); // `HHmmss` without colons
-        fs.mkdir('./outputs/' + date, {recursive: true});
+        await fs.mkdir('./outputs/' + date, {recursive: true});
 
         const name = inputs[i].name;
         const image_quantity = inputs[i].batch_size * inputs[i].n_iter;

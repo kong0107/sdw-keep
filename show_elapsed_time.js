@@ -25,5 +25,6 @@ export default function showElapsedTime() {
     return function() {
         clearInterval(intervalID);
         process.stdout.write('\n');
+        return Date.now() - start;
     };
 }

@@ -4,6 +4,7 @@
     $dirpath = './inputs/';
 
     $models = json_decode(file_get_contents($url_api . 'sd-models'));
+    sort($models);
     $samplers = json_decode(file_get_contents($url_api . 'samplers'));
 
     $inputs = array();
@@ -20,9 +21,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>input files edit</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/kong-util@0.7.4/dist/all.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/kong-util@0.7.7/dist/all.js"></script>
     <script> kongUtil.use(); </script>
     <style>
         .range-container {
@@ -61,9 +62,11 @@
                             <select name="sd_model_checkpoint" class="form-select">
                                 <option>default</option>
                                 <?php
-                                    foreach($models as $model) {
+                                    foreach ($models as $model) {
                                         echo '<option';
-                                        if($model->title === $input->override_settings->sd_model_checkpoint) echo ' selected';
+                                        if (isset($input->override_settings)
+                                            && str_starts_with($model->title, $input->override_settings->sd_model_checkpoint)
+                                        ) echo ' selected';
                                         echo '>' . $model->title . '</option>';
                                     }
                                 ?>
@@ -79,7 +82,7 @@
                                 <?php
                                     foreach($samplers as $sampler) {
                                         echo '<option';
-                                        if($sampler->name === $input->sampler_name) echo ' selected';
+                                        if(isset($input->sampler_name) && $input->sampler_name === $sampler->name) echo ' selected';
                                         echo '>' . $sampler->name . '</option>';
                                     }
                                 ?>
@@ -164,7 +167,9 @@
                     </dl>
 
                     <div>
-                        <button type="button" class="btn btn-info" disabled>儲存</button>
+                        <button type="button" name="copy" class="btn btn-warning">複製</button>
+                        &nbsp;
+                        <button type="button" name="save" class="btn btn-info" disabled>儲存</button>
                     </div>
                 </form>
             </article>
@@ -181,12 +186,14 @@
         });
 
         $$('form').forEach(form => {
-            const submitButton = $('button', form);
+            const saveButton = $('button[name="save"]', form);
+            const copyButton = $('button[name="copy"]', form);
 
             const changeListener = () => {
-                submitButton.disabled = false;
-                submitButton.textContent = '儲存';
-                submitButton.className = 'btn btn-info';
+                saveButton.disabled = false;
+                saveButton.textContent = '儲存';
+                saveButton.className = 'btn btn-info';
+                copyButton.disabled = true;
             }
             $$('input, textarea', form).forEach(input => {
                 listen(input, 'input', changeListener);
@@ -195,23 +202,35 @@
                 listen(select, 'change', changeListener);
             });
 
-            listen(submitButton, 'click', () => {
-                submitButton.disabled = true;
-                submitButton.textContent = '儲存中';
-                submitButton.className = 'btn btn-warning';
+            listen(saveButton, 'click', () => {
+                saveButton.disabled = true;
+                saveButton.textContent = '儲存中';
+                saveButton.className = 'btn btn-warning';
                 const formData = new FormData(form);
                 fetchJSON(
                     'save_batch.php',
                     {method: 'POST', body: formData}
                 ).then(jso => {
                     console.debug(jso);
-                    submitButton.textContent = '已於 ' + (new Date).toLocaleTimeString() + ' 儲存';
-                    submitButton.className = 'btn btn-light';
+                    saveButton.textContent = '已於 ' + (new Date).toLocaleTimeString() + ' 儲存';
+                    saveButton.className = 'btn btn-light';
+                    copyButton.disabled = false;
+                    copyButton.textContent = '複製';
                 }).catch(err => {
                     console.error(err);
-                    submitButton.textContent = '儲存失敗';
-                    submitButton.className = 'btn btn-danger';
+                    saveButton.textContent = '儲存失敗';
+                    saveButton.className = 'btn btn-danger';
                 });
+            });
+
+            listen(copyButton, 'click', () => {
+                copyButton.disabled = true;
+                fetchStrict(
+                    'copy_batch.php?batch_name=' + form.elements.batch_name.value
+                ).then(
+                    () => location.reload(),
+                    () => copyButton.textContent = '複製失敗'
+                );
             });
         });
 
