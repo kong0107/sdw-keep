@@ -8,17 +8,15 @@ try {
 
     $filepath = "inputs/{$_POST['batch_name']}.json";
 
-    $parameters = json_decode(file_get_contents($filepath));
+    $parameters = json_decode(file_get_contents($filepath), true);
 
     foreach($_POST as $key => $value) {
         if($key === 'sd_model_checkpoint') {
-            $parameters->override_settings = array('sd_model_checkpoint' => $value);
+            $parameters['override_settings'] = array('sd_model_checkpoint' => $value);
             continue;
         }
-        if(isset($parameters->$key)) {
-            if(is_numeric($value)) $value = floatval($value);
-            $parameters->$key = $value;
-        }
+        if(is_numeric($value)) $value = floatval($value);
+        $parameters[$key] = $value;
     }
 
     $output = json_encode($parameters, JSON_PRETTY_PRINT);

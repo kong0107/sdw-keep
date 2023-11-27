@@ -84,7 +84,10 @@ while(1) {
                 console.warn(result.statusCode, result.statusMessage);
                 result = {detail: [result]};
             }
-            else result = JSON.parse(result.body);
+            else {
+                fs.writeFile("./last_result.json", result.body);
+                result = JSON.parse(result.body);
+            }
         }
         catch(err) { // no such server
             stopTimer();
@@ -109,27 +112,20 @@ while(1) {
         delete info.all_prompts;
         delete info.all_negative_prompts;
         delete info.infotexts;
+        info.elapsed_time = Date.now() - d.getTime();
 
-        const output = {
-            model: parameters?.override_settings?.sd_model_checkpoint,
-            elapsed_time: Date.now() - d.getTime(),
-            parameters: Object.assign({
-                // prompt: parameters.promt,
-                negative_prompt: parameters.negative_prompt
-            }, parameters), // re-order the attributes in object
-            info,
-        };
-        if(!output.model) {
-            const models = await fetch(config.serverOrigin + '/sdapi/v1/sd-models').then(res => res.json());
-            output.model = models[models.length - 1].title;
-            console.log('by using default model', output.model);
-        }
-        await fs.writeFile(outputPath, JSON.stringify(output, null, '\t'));
+        const specified_model = parameters.override_settings?.sd_model_checkpoint;
+        const real_model = info.sd_model_name + ` [${info.sd_model_hash}]`;
+        if (! specified_model) console.warn(`model not specified; used ${real_model}`);
+        else if (! real_model.startsWith(specified_model))
+            console.warn(`model ${specified_model} not found;\nused ${real_model}`);
+
+        await fs.writeFile(outputPath, JSON.stringify(info, null, '\t'));
 
         // Save images.
         const message = [
             name,
-            output.model,
+            info.sd_model_name,
             info.prompt
         ].join('\n');
         for(let j = 0; j < images.length; j++) {
@@ -149,7 +145,7 @@ while(1) {
             files.push({
                 type: 'application/json',
                 filename: `${name}-${shortDate}-${time}.json`,
-                value: JSON.stringify(output, null, '\t')
+                value: JSON.stringify(info, null, '\t')
             });
             notify(message, files);
         }

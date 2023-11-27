@@ -18,6 +18,7 @@ await kongUtilArray.forEachAsync(async (emoji) => {
         body: JSON.stringify({
             prompt: `anthro male bear, solo, (${cldr}: 1.5)`,
             negative_prompt: 'EasyNegative, bad-artist, boring_e621',
+            cfg_scale: 10,
             steps: 24,
             batch_size: 2,
             sampler_name: 'Euler a'
